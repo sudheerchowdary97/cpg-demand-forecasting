@@ -32,9 +32,11 @@ dev = [
     "pytest>=8.2",
     "ipykernel>=6.29",
 ]
-# Tooling for generating the per-task business/developer summary workbooks.
+# Tooling for generating the per-task business/developer summary workbooks
+# and PepsiCo-styled branding assets (icons/banners) embedded in them.
 docs = [
     "openpyxl>=3.1",
+    "pillow>=10.0",
 ]
 
 [tool.setuptools.packages.find]
