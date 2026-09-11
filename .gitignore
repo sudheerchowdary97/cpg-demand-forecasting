@@ -1,0 +1,40 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ---- Virtual envs ----
+.venv/
+venv/
+env/
+
+# ---- Secrets / config ----
+.env
+*.local
+
+# ---- Data (versioned via DVC, not git) ----
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# ---- Models / artifacts ----
+models/*
+!models/.gitkeep
+*.ckpt
+*.pt
+*.pth
+*.onnx
+
+# ---- Experiment tracking ----
+mlruns/
+wandb/
+
+# ---- OS ----
+.DS_Store
