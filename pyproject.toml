@@ -32,6 +32,10 @@ dev = [
     "pytest>=8.2",
     "ipykernel>=6.29",
 ]
+# Tooling for generating the per-task business/developer summary workbooks.
+docs = [
+    "openpyxl>=3.1",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -47,6 +51,9 @@ target-version = "py312"
 [tool.ruff.lint]
 # E/W pycodestyle, F pyflakes, I import-sort, UP pyupgrade, B bugbear
 select = ["E", "F", "I", "W", "UP", "B"]
+# black owns line length and intentionally does not wrap long string literals,
+# so we disable E501 (line-too-long) to avoid fighting the formatter.
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
