@@ -68,9 +68,11 @@ MARKET_CHANNELS: dict[str, list[tuple[str, list[str], int]]] = {
     ],
 }
 
-# Relative per-store daily volume by channel (GT = many small stores; MT/wholesale bigger).
+# Relative per-store daily volume by channel. Note: a "General Trade" store record
+# proxies aggregated distributor secondary-sales across many tiny outlets, so its
+# per-record volume is high — making GT dominant in India/Pakistan (as in reality).
 CHANNEL_VOL: dict[str, float] = {
-    "Traditional / General Trade": 0.5,
+    "Traditional / General Trade": 3.2,
     "Modern Trade — Hypermarket": 2.6,
     "Modern Trade — Supermarket": 1.7,
     "Discounters": 1.4,

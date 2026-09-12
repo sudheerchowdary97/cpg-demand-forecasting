@@ -61,6 +61,11 @@ select = ["E", "F", "I", "W", "UP", "B"]
 # so we disable E501 (line-too-long) to avoid fighting the formatter.
 ignore = ["E501"]
 
+[tool.ruff.lint.isort]
+# Declare the project package as first-party so all ruff versions group imports
+# identically (prevents pre-commit vs local ruff fighting over import order).
+known-first-party = ["cpg_forecast"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

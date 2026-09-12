@@ -104,7 +104,7 @@ ROADMAP: list[tuple[str, str, str, str, str, str, str, str, str]] = [
         "Reproducible notebooks, plotting",
         "EDA notebook + findings doc",
         "Mac",
-        "Next",
+        "Done",
     ),
     (
         "3",
@@ -115,7 +115,7 @@ ROADMAP: list[tuple[str, str, str, str, str, str, str, str, str]] = [
         "ETL as code, config (pydantic/Hydra), unit tests",
         "Feature pipeline + tests",
         "Mac",
-        "Planned",
+        "Next",
     ),
     (
         "4",

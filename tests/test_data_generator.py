@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pandas as pd
+
 from cpg_forecast.data import DataConfig, generate
 from cpg_forecast.data.reference import MARKET_CHANNELS
 from cpg_forecast.data.schema import COLUMNS

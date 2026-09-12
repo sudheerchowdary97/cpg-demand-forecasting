@@ -92,7 +92,7 @@ deep_learning_cpg/
 | 17 | Demo app + LLM insight layer | communicating uncertainty | Streamlit, prompt design |
 | 18 | Docs, presentation & portfolio | synthesis | technical writing, Keynote-HTML deck |
 
-**Status:** Tasks 0–1 complete (scaffold + synthetic data generator); Task 2 (EDA) next. Each task is committed and pushed on completion.
+**Status:** Tasks 0–2 complete (scaffold + synthetic data + EDA); Task 3 (feature pipeline) next. Each task is committed and pushed on completion.
 
 ---
 

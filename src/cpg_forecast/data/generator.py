@@ -130,7 +130,10 @@ def generate(cfg: DataConfig) -> pd.DataFrame:
                 base = 6.0 * mscale * cvol * sku["popularity"] * sku["pack_factor"]
                 trend = 1.0 + rng.uniform(-0.05, 0.20) * (t / n)
                 annual_amp = 0.25 if sku["category"] == "Beverage" else 0.12
-                annual = 1.0 + annual_amp * np.sin(2 * np.pi * (doy - 80) / 365.0)
+                # hemisphere-aware: Australia's demand peaks in its summer (Dec-Feb),
+                # consistent with the temperature series (both flipped vs the north).
+                season_phase = np.pi if calendars.is_southern_hemisphere(market) else 0.0
+                annual = 1.0 + annual_amp * np.sin(2 * np.pi * (doy - 80) / 365.0 + season_phase)
 
                 # weather: beverages rise with temperature
                 if sku["category"] == "Beverage":

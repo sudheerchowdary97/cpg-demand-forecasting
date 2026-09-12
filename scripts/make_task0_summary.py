@@ -545,14 +545,14 @@ def build() -> Workbook:
             "EDA & time-series understanding",
             "seasonality, stationarity",
             "reproducible notebooks",
-            "Next",
+            "Done ✅",
         ],
         [
             "3",
             "Data pipeline & feature engineering",
             "windowing, market/brand embeddings",
             "leakage-free ETL as code",
-            "Planned",
+            "Next",
         ],
         [
             "4",
