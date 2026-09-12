@@ -1,12 +1,10 @@
-"""Generate the Task 0 summary workbook — PepsiCo client-styled.
+"""Generate the Task 0 summary workbook — PepsiCo client-styled, multi-geo scope.
 
-Produces ``docs/Task0_Summary.xlsx`` with audience-specific sheets (business +
-developer), PepsiCo-themed styling, and a product-portfolio sheet with generated
-brand icons.
+Produces ``docs/Task0_Summary.xlsx``: audience-specific sheets (business +
+developer), PepsiCo theming with the real logo, a global brand matrix across
+geographies, a per-brand portfolio with icons, and the portfolio infographic.
 
-See ``scripts/branding.py`` for the important trademark disclaimer: this is an
-independent learning project and uses stylized, ORIGINAL brand representations,
-not official PepsiCo assets.
+See ``scripts/branding.py`` for the trademark disclaimer.
 
 Run with:  make summary   (or)   python scripts/make_task0_summary.py
 """
@@ -24,11 +22,11 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 OUT_PATH = Path(__file__).resolve().parents[1] / "docs" / "Task0_Summary.xlsx"
 
-# ---- Shared styling (PepsiCo palette) -------------------------------------
-TITLE_FONT = Font(bold=True, size=14, color=B.WHITE)
+# ---- Styling --------------------------------------------------------------
+TITLE_FONT = Font(bold=True, size=14, color=B.PEPSI_BLUE)  # navy on white bar
 HEADER_FONT = Font(bold=True, size=11, color=B.WHITE)
 HEADER_FILL = PatternFill("solid", fgColor=B.PEPSI_BLUE)
-TITLE_FILL = PatternFill("solid", fgColor=B.PEPSI_BLUE_DARK)
+TITLE_FILL = PatternFill("solid", fgColor=B.WHITE)
 WRAP = Alignment(wrap_text=True, vertical="top")
 WRAP_CENTER = Alignment(wrap_text=True, vertical="center", horizontal="center")
 THIN = Side(style="thin", color="BFBFBF")
@@ -38,35 +36,31 @@ DONE_FILL = PatternFill("solid", fgColor=B.DONE_GREEN)
 ICONS: dict[str, Path] = {}
 
 
-def _xl_image(path: Path, px: int) -> XLImage:
+def _xl_image(path: Path, height: int, width: int | None = None) -> XLImage:
     img = XLImage(str(path))
-    img.width = px
-    img.height = px
+    if width is None:
+        w, h = B.image_size(path)
+        width = max(1, round(height * w / h))
+    img.width = width
+    img.height = height
     return img
 
 
 def _branded_title(ws: Worksheet, title: str, span: int) -> None:
-    """Row 1 = PepsiCo-blue title bar with the tricolor roundel accent."""
+    """Row 1 = white title bar with the real PepsiCo logo + navy title text."""
+    span = max(span, 2)  # need col 1 for the logo + col 2+ for the title
     for col in range(1, span + 1):
         ws.cell(row=1, column=col).fill = TITLE_FILL
     ws.merge_cells(start_row=1, start_column=2, end_row=1, end_column=span)
     cell = ws.cell(row=1, column=2, value=title)
     cell.font = TITLE_FONT
     cell.alignment = Alignment(vertical="center", horizontal="left", indent=1)
-    ws.row_dimensions[1].height = 30
-    ws.add_image(_xl_image(ICONS["_roundel"], 26), "A1")
+    ws.row_dimensions[1].height = 34
+    if "_logo" in ICONS:
+        ws.add_image(_xl_image(ICONS["_logo"], height=30), "A1")
 
 
-def _write_table(
-    ws: Worksheet,
-    title: str,
-    headers: list[str],
-    rows: list[list[str]],
-    widths: list[int],
-) -> None:
-    """Titled, PepsiCo-styled table: row 1 title bar, row 2 header, row 3+ data."""
-    _branded_title(ws, title, len(headers))
-
+def _headers(ws: Worksheet, headers: list[str], widths: list[int]) -> None:
     for col, (head, width) in enumerate(zip(headers, widths, strict=True), start=1):
         cell = ws.cell(row=2, column=col, value=head)
         cell.font = HEADER_FONT
@@ -76,6 +70,16 @@ def _write_table(
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.row_dimensions[2].height = 22
 
+
+def _write_table(
+    ws: Worksheet,
+    title: str,
+    headers: list[str],
+    rows: list[list[str]],
+    widths: list[int],
+) -> None:
+    _branded_title(ws, title, len(headers))
+    _headers(ws, headers, widths)
     for r, row in enumerate(rows, start=3):
         for c, value in enumerate(row, start=1):
             cell = ws.cell(row=r, column=c, value=value)
@@ -86,21 +90,23 @@ def _write_table(
             if str(row[status_idx]).lower().startswith(("done", "✅")):
                 for cc in range(1, len(headers) + 1):
                     ws.cell(row=r, column=cc).fill = DONE_FILL
-
     ws.freeze_panes = "A3"
     ws.sheet_view.showGridLines = False
 
 
-# ---- Sheet content --------------------------------------------------------
+# ---- Sheets ---------------------------------------------------------------
 def build() -> Workbook:
     wb = Workbook()
+
+    n_geos = len(B.GEOS)
+    n_brands = len(B.BRAND_INFO)
 
     # 1) Overview -----------------------------------------------------------
     ws = wb.active
     ws.title = "Overview"
     _write_table(
         ws,
-        "PepsiCo Demand Forecasting — Project Overview",
+        "PepsiCo Global Demand Forecasting — Project Overview",
         ["Field", "Detail"],
         [
             ["Client (illustrative)", "PepsiCo, Inc. — global food & beverage leader"],
@@ -110,12 +116,16 @@ def build() -> Workbook:
                 "Learning project: master the full deep-learning ladder end to end (data -> deployment)",
             ],
             [
-                "Portfolio in scope",
-                "Beverages (Pepsi, Mtn Dew, Gatorade, Tropicana, Aquafina, 7UP) + Frito-Lay snacks (Lay's, Doritos, Cheetos, Ruffles) + Quaker foods",
+                "Scope",
+                f"ALL PepsiCo food & beverage brands across geographies. Illustrative markets: {', '.join(B.GEOS)} ({n_geos} shown, {n_brands} distinct brands) — extensible to PepsiCo's 200+ markets.",
+            ],
+            [
+                "Scaling approach",
+                "One GLOBAL model with market x brand x category x store embeddings; transfers learning across geos and cold-starts new-market / new-product launches.",
             ],
             [
                 "Data (proxy)",
-                "M5 Forecasting - Accuracy (Walmart, Kaggle) used as a realistic stand-in for PepsiCo's SKU x store x day sales; a real engagement would use PepsiCo shipment / POS / Nielsen data",
+                "M5 Forecasting - Accuracy (Walmart, Kaggle) as a realistic stand-in for PepsiCo's SKU x store x day sales; a real engagement would use PepsiCo shipment / POS / Nielsen data per market.",
             ],
             [
                 "Forecast target",
@@ -136,76 +146,81 @@ def build() -> Workbook:
             ],
             [
                 "DISCLAIMER",
-                "Independent learning project; NOT affiliated with or endorsed by PepsiCo. Brand icons/colors are stylized, original representations — not official assets. All trademarks belong to their owners.",
+                "Independent learning project; NOT affiliated with or endorsed by PepsiCo. Generated brand tiles are stylized originals; logo/infographic are user-supplied. All trademarks belong to their owners.",
             ],
         ],
-        [24, 95],
+        [24, 100],
     )
 
     # 2) Business summary ---------------------------------------------------
     ws = wb.create_sheet("Business Summary")
     _write_table(
         ws,
-        "Business View — PepsiCo Objectives, Pain Points & Solution",
+        "Business View — Scaling PepsiCo Forecasting Across Geographies",
         ["Topic", "Detail", "Why it matters to PepsiCo"],
         [
             [
                 "Business objective",
-                "Forecast demand accurately at store level so the right pack is on the right shelf at the right time across Pepsi, Frito-Lay and Quaker.",
-                "Directly drives net revenue, availability, and working capital.",
+                "Forecast demand accurately at store level for every food & beverage brand in every market, so the right pack is on the right shelf at the right time.",
+                "Directly drives net revenue, availability, and working capital worldwide.",
             ],
             [
                 "Scale of the problem",
-                "~$91B annual net revenue, 20+ billion-dollar brands, products sold in 200+ countries/territories.",
+                "~$91B net revenue, 20+ billion-dollar brands, products in 200+ countries/territories; thousands of SKUs x thousands of stores x many markets.",
                 "Tiny % accuracy gains compound into very large absolute value.",
             ],
             [
-                "Pain point 1 — Stockouts",
-                "Empty shelves lose the sale and push shoppers to competitor brands.",
+                "Why multi-geo is hard",
+                "Hemisphere-flipped seasons (Australia summer = Dec-Feb), local festivals (Diwali, Ramadan/Eid, Christmas), local brands (Walkers, Smith's, Kurkure, Sting), currencies, prices and weather.",
+                "A single generic model fails; forecasts must be locally aware.",
+            ],
+            [
+                "Local brand portfolios",
+                "Each market carries a tailored mix (e.g., UK: Walkers + Lipton; AU: Smith's + Solo + Sobe; India/Pakistan: Kurkure + Sting).",
+                "The model must handle market-specific catalogs, not one global list.",
+            ],
+            [
+                "Pain point — Stockouts",
+                "Empty shelves lose the sale and push shoppers to competitors.",
                 "Lost sales estimated at ~4% of revenue for typical retailers.",
             ],
             [
-                "Pain point 2 — Waste / freshness",
-                "Frito-Lay snacks and chilled Tropicana are freshness-critical; overstock becomes stale/expired.",
+                "Pain point — Waste / freshness",
+                "Snacks and chilled juices are freshness-critical; overstock becomes stale/expired.",
                 "Waste and markdowns directly erode margin.",
             ],
             [
-                "Pain point 3 — DSD complexity",
-                "Direct-Store-Delivery routes must be stocked per store per day without over/under-loading trucks.",
+                "Pain point — DSD complexity",
+                "Direct-Store-Delivery routes must be stocked per store per day across many markets.",
                 "Route efficiency and service level depend on the forecast.",
             ],
             [
-                "Pain point 4 — Promotions & events",
-                "Promos, price changes, holidays, sports events and heatwaves cause large demand swings.",
+                "Pain point — Promotions & events",
+                "Promos, price changes, holidays, sports events and heatwaves cause large, market-specific swings.",
                 "Missed spikes = stockouts; over-forecast = waste.",
             ],
             [
-                "Pain point 5 — New product launches",
-                "Constant limited-time flavors and NPI have little/no history.",
+                "Pain point — New launches",
+                "Constant limited-time flavors, new products, and new-market entries have little/no history.",
                 "Cold-start forecasting is hard and high-stakes.",
             ],
             [
                 "Proposed solution",
-                "Deep-learning time-series models forecasting SKU x store x day demand with uncertainty, feeding replenishment, DSD, production and promo planning.",
-                "Captures seasonality, promotions, weather and cross-brand patterns automatically.",
+                "One GLOBAL deep-learning model with market/brand/category embeddings, forecasting SKU x store x day demand with uncertainty, feeding replenishment, DSD, production and promo planning.",
+                "Learns shared patterns across markets while respecting local behavior; scales to new geos.",
             ],
             [
                 "Business value",
-                "Fewer stockouts, less waste, higher service levels, tighter DSD, and data-driven, auditable planning.",
-                "Improves both top line (sales) and bottom line (margin).",
-            ],
-            [
-                "Pathway to impact",
-                "Forecasts -> safety stock & replenishment -> DSD route loads -> production plans -> promo planning; served via a live API + planner dashboard.",
-                "Turns model output into daily operational decisions.",
+                "Fewer stockouts, less waste, higher service levels, faster new-market rollout, and consistent, auditable planning globally.",
+                "Improves both top line (sales) and bottom line (margin) at scale.",
             ],
             [
                 "Task 0 in business terms",
-                "Built a trustworthy, reproducible, vendor-neutral foundation before any modeling.",
-                "Ensures results are credible and auditable — reduces project risk.",
+                "Built a trustworthy, reproducible, vendor-neutral foundation designed to scale across brands and markets.",
+                "De-risks the global rollout before any modeling.",
             ],
         ],
-        [24, 64, 42],
+        [22, 66, 42],
     )
 
     # 3) Developer summary --------------------------------------------------
@@ -217,7 +232,7 @@ def build() -> Workbook:
         [
             [
                 "Objective",
-                "Create a reproducible, industry-standard project skeleton before any DL code.",
+                "Create a reproducible, industry-standard project skeleton that will scale to multi-geo, multi-brand data.",
                 "Foundations first",
             ],
             [
@@ -252,13 +267,13 @@ def build() -> Workbook:
             ],
             [
                 "Branding",
-                "Reusable PepsiCo-styled icon/theme module powering all task workbooks.",
+                "Reusable module: real PepsiCo logo + generated brand icons + geo/brand data model driving all task workbooks.",
                 "scripts/branding.py (Pillow)",
             ],
             [
-                "Data / model hygiene",
-                "data/ and models/ git-ignored (DVC-tracked later); folders kept via .gitkeep.",
-                ".gitignore + DVC intent",
+                "Scale-ready data model",
+                "Brand/geo master data (kind, market coverage) encoded now to seed market x brand x category features later.",
+                "BRAND_INFO / GEOS",
             ],
             [
                 "Version control",
@@ -267,7 +282,7 @@ def build() -> Workbook:
             ],
             [
                 "Docs",
-                "README with full Task 0-18 roadmap; MIT license; this branded summary workbook.",
+                "README roadmap; MIT license; this branded, multi-geo summary workbook.",
                 "README.md, LICENSE",
             ],
             [
@@ -276,7 +291,7 @@ def build() -> Workbook:
                 "DL starts at Task 5",
             ],
         ],
-        [22, 62, 40],
+        [22, 64, 38],
     )
 
     # 4) Concepts covered ---------------------------------------------------
@@ -337,44 +352,80 @@ def build() -> Workbook:
                 "History, backup, collaboration, portfolio.",
             ],
             [
-                "Data/model separation",
-                "Keeping large data & artifacts out of git (DVC later).",
-                "Keeps repo small; data versioned properly.",
+                "Master data modeling",
+                "Encoding brand/geo attributes (kind, market coverage) up front.",
+                "Seeds the embeddings that let one model scale across geos.",
             ],
             [
                 "Reproducibility",
-                "Pinned Python + pinned deps + scripted setup.",
-                "Anyone can rebuild the exact environment.",
+                "Pinned Python + pinned deps + scripted setup + regenerable assets.",
+                "Anyone can rebuild the exact environment and docs.",
             ],
         ],
         [24, 55, 45],
     )
 
-    # 5) PepsiCo product portfolio -----------------------------------------
-    ws = wb.create_sheet("PepsiCo Portfolio")
-    _branded_title(ws, "PepsiCo Portfolio in Scope — Brands & Forecasting Relevance", 4)
-    headers = ["Icon", "Brand", "Category", "Forecasting relevance"]
-    for col, (head, width) in enumerate(zip(headers, [8, 22, 26, 60], strict=True), start=1):
-        cell = ws.cell(row=2, column=col, value=head)
-        cell.font = HEADER_FONT
-        cell.fill = HEADER_FILL
-        cell.alignment = WRAP_CENTER
-        cell.border = BORDER
-        ws.column_dimensions[get_column_letter(col)].width = width
-    ws.row_dimensions[2].height = 22
-
-    for i, (name, cat, _color, _initials, _tcolor, emoji, note) in enumerate(B.BRANDS):
-        r = 3 + i
+    # 5) Global brand matrix ------------------------------------------------
+    ws = wb.create_sheet("Global Brand Matrix")
+    _branded_title(ws, "Global Brand Matrix — Brands by Market (Food + Beverage)", 3)
+    _headers(ws, ["Market", "Food Brands (5)", "Beverage Brands (5)"], [22, 52, 52])
+    r = 3
+    for geo, (flag, tagline, food, bev) in B.GEOS.items():
+        ws.cell(row=r, column=1, value=f"{flag} {geo}\n{tagline}").alignment = WRAP
+        ws.cell(row=r, column=2, value=", ".join(food)).alignment = WRAP
+        ws.cell(row=r, column=3, value=", ".join(bev)).alignment = WRAP
+        for c in range(1, 4):
+            ws.cell(row=r, column=c).border = BORDER
         ws.row_dimensions[r].height = 34
-        ws.add_image(_xl_image(ICONS[name], 30), f"A{r}")
-        for c, value in enumerate(["", f"{emoji} {name}", cat, note], start=1):
-            cell = ws.cell(row=r, column=c, value=value)
-            cell.alignment = WRAP
-            cell.border = BORDER
+        r += 1
+    note = ws.cell(
+        row=r,
+        column=1,
+        value="Illustrative 4 of PepsiCo's 200+ markets. One global model scales to new markets via market/brand/category embeddings + hierarchical forecasting.",
+    )
+    note.alignment = WRAP
+    note.font = Font(italic=True, color=B.PEPSI_BLUE)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
+    ws.row_dimensions[r].height = 30
     ws.freeze_panes = "A3"
     ws.sheet_view.showGridLines = False
 
-    # 6) Roadmap 0-18 -------------------------------------------------------
+    # 6) Brand portfolio (with icons) --------------------------------------
+    ws = wb.create_sheet("Brand Portfolio")
+    _branded_title(ws, f"Brand Portfolio in Scope — {n_brands} Brands Across Markets", 5)
+    _headers(ws, ["Icon", "Brand", "Type", "Category", "Markets in scope"], [8, 20, 12, 24, 34])
+    r = 3
+    for name, (kind, _color, _initials, _tcolor, emoji) in B.BRAND_INFO.items():
+        ws.row_dimensions[r].height = 34
+        if name in ICONS:
+            ws.add_image(_xl_image(ICONS[name], height=30, width=30), f"A{r}")
+        markets = ", ".join(B.markets_for(name))
+        for c, value in enumerate(["", f"{emoji} {name}", kind, _category(name), markets], start=1):
+            cell = ws.cell(row=r, column=c, value=value)
+            cell.alignment = WRAP
+            cell.border = BORDER
+        r += 1
+    ws.freeze_panes = "A3"
+    ws.sheet_view.showGridLines = False
+
+    # 7) Global portfolio map (infographic) --------------------------------
+    ws = wb.create_sheet("Global Portfolio Map")
+    _branded_title(ws, "Loved Brands. Local Markets. — Global Portfolio Map", 1)
+    cap = ws.cell(
+        row=2,
+        column=1,
+        value="Source: user-supplied PepsiCo portfolio infographic (docs/brands_icons/Brands_Geos.png).",
+    )
+    cap.font = Font(italic=True, size=9, color="808080")
+    ws.column_dimensions["A"].width = 20
+    if "_infographic" in ICONS:
+        w, h = B.image_size(ICONS["_infographic"])
+        disp_w = min(1040, w)
+        img = _xl_image(ICONS["_infographic"], height=round(disp_w * h / w), width=disp_w)
+        ws.add_image(img, "A4")
+    ws.sheet_view.showGridLines = False
+
+    # 8) Roadmap 0-18 -------------------------------------------------------
     roadmap = [
         [
             "0",
@@ -400,7 +451,7 @@ def build() -> Workbook:
         [
             "3",
             "Data pipeline & feature engineering",
-            "windowing, embeddings",
+            "windowing, market/brand embeddings",
             "leakage-free ETL as code",
             "Planned",
         ],
@@ -436,7 +487,7 @@ def build() -> Workbook:
         [
             "9",
             "Transformer / TFT",
-            "self-attention, interpretability",
+            "self-attention, static covariates (geo/brand)",
             "large-model training",
             "Planned",
         ],
@@ -457,7 +508,7 @@ def build() -> Workbook:
         [
             "12",
             "Cloud full-scale training",
-            "mixed precision, checkpointing",
+            "global model across all markets",
             "training-as-code",
             "Planned",
         ],
@@ -482,7 +533,13 @@ def build() -> Workbook:
             "Cloud Run/Render, GitHub Actions",
             "Planned",
         ],
-        ["16", "Monitoring, drift & retraining", "distribution shift", "observability", "Planned"],
+        [
+            "16",
+            "Monitoring, drift & retraining",
+            "distribution shift per market",
+            "observability",
+            "Planned",
+        ],
         [
             "17",
             "Demo app + LLM insight layer",
@@ -501,13 +558,13 @@ def build() -> Workbook:
     ws = wb.create_sheet("Roadmap 0-18")
     _write_table(
         ws,
-        "Full Roadmap — Task 0 to 18",
+        "Full Roadmap — Task 0 to 18 (multi-geo, multi-brand)",
         ["Task", "Name", "Core DL concept", "Engineering skill", "Status"],
         roadmap,
-        [7, 38, 32, 34, 12],
+        [7, 38, 36, 32, 12],
     )
 
-    # 7) Task 0 checklist ---------------------------------------------------
+    # 9) Task 0 checklist ---------------------------------------------------
     ws = wb.create_sheet("Task 0 Checklist")
     _write_table(
         ws,
@@ -524,13 +581,41 @@ def build() -> Workbook:
             ["README with full roadmap + MIT LICENSE", "Done ✅"],
             ["Personal (non-Apple) git identity", "Done ✅"],
             ["Repo created & pushed to personal GitHub", "Done ✅"],
-            ["PepsiCo-styled branding module (icons/theme)", "Done ✅"],
+            ["PepsiCo branding: real logo + generated brand icons", "Done ✅"],
+            ["Multi-geo, multi-brand scope defined (matrix + portfolio)", "Done ✅"],
             ["Business + developer summary workbook (this file)", "Done ✅"],
         ],
         [65, 14],
     )
 
     return wb
+
+
+def _category(name: str) -> str:
+    """Human-friendly sub-category for the portfolio sheet."""
+    mapping = {
+        "Lay's": "Salty snacks (Frito-Lay)",
+        "Walkers": "Salty snacks (Frito-Lay)",
+        "Smith's": "Salty snacks (Frito-Lay)",
+        "Doritos": "Salty snacks (Frito-Lay)",
+        "Cheetos": "Salty snacks (Frito-Lay)",
+        "Ruffles": "Salty snacks (Frito-Lay)",
+        "Red Rock Deli": "Premium salty snacks",
+        "Kurkure": "Salty snacks (local)",
+        "Quaker": "Foods / oats",
+        "Pepsi": "Carbonated soft drinks",
+        "Pepsi Max": "Carbonated soft drinks",
+        "7UP": "Carbonated soft drinks",
+        "Mountain Dew": "Carbonated soft drinks",
+        "Solo": "Carbonated soft drinks",
+        "Tropicana": "Juices",
+        "Lipton": "Ready-to-drink tea",
+        "Sobe": "Enhanced / flavored drinks",
+        "Gatorade": "Sports drinks",
+        "Sting": "Energy drinks",
+        "Aquafina": "Bottled water",
+    }
+    return mapping.get(name, "")
 
 
 def main() -> None:
