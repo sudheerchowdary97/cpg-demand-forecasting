@@ -86,9 +86,144 @@ def compute_findings(df: pd.DataFrame) -> dict:
     }
 
 
+# ---- Market-wise analysis tables (for docs/EDA.xlsx) ----------------------
+DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _share(units: pd.Series) -> pd.Series:
+    return (units / units.sum() * 100).round(1)
+
+
+def market_summary(df: pd.DataFrame) -> pd.DataFrame:
+    g = df.groupby("market")
+    out = pd.DataFrame(
+        {
+            "rows": g.size(),
+            "total_units": g["units"].sum(),
+            "mean_units": g["units"].mean().round(2),
+            "zero_%": g["units"].apply(lambda x: (x == 0).mean() * 100).round(1),
+            "stores": g["store_id"].nunique(),
+            "skus": g["sku_id"].nunique(),
+            "channels": g["channel"].nunique(),
+        }
+    ).sort_values("total_units", ascending=False)
+    return out.reset_index()
+
+
+def channel_share(df: pd.DataFrame, market: str) -> pd.DataFrame:
+    t = df[df["market"] == market].groupby("channel")["units"].sum().sort_values(ascending=False)
+    return pd.DataFrame(
+        {"channel": t.index, "units": t.to_numpy(), "share_%": _share(t).to_numpy()}
+    )
+
+
+def category_split(df: pd.DataFrame, market: str) -> pd.DataFrame:
+    t = df[df["market"] == market].groupby("category")["units"].sum().sort_values(ascending=False)
+    return pd.DataFrame(
+        {"category": t.index, "units": t.to_numpy(), "share_%": _share(t).to_numpy()}
+    )
+
+
+def weekday_table(df: pd.DataFrame, market: str) -> pd.DataFrame:
+    m = df[df["market"] == market].groupby("dow")["units"].mean()
+    idx = (m / m.mean() * 100).round(0)
+    return pd.DataFrame(
+        {
+            "weekday": [DAYS[i] for i in m.index],
+            "mean_units": m.round(2).to_numpy(),
+            "index_100": idx.to_numpy(),
+        }
+    )
+
+
+def monthly_table(df: pd.DataFrame, market: str) -> pd.DataFrame:
+    m = df[df["market"] == market].groupby("month")["units"].mean()
+    idx = (m / m.mean() * 100).round(0)
+    return pd.DataFrame(
+        {
+            "month": m.index.to_numpy(),
+            "mean_units": m.round(2).to_numpy(),
+            "index_100": idx.to_numpy(),
+        }
+    )
+
+
+def uplift_row(df: pd.DataFrame, market: str) -> dict:
+    sub = df[df["market"] == market]
+    promo = sub.groupby("promo_flag")["units"].mean()
+    hol = sub.assign(h=sub["holiday"] != "").groupby("h")["units"].mean()
+    dow = sub.groupby("dow")["units"].mean()
+    return {
+        "promo_x": round(float(promo.get(1, float("nan")) / promo.get(0, float("nan"))), 2),
+        "holiday_x": round(float(hol.get(True, float("nan")) / hol.get(False, float("nan"))), 2),
+        "weekend_x": round(float(dow[dow.index >= 4].mean() / dow[dow.index < 4].mean()), 2),
+    }
+
+
+def top_brands(df: pd.DataFrame, market: str, n: int = 8) -> pd.DataFrame:
+    sub = df[df["market"] == market]
+    t = sub.groupby("brand")["units"].sum().sort_values(ascending=False).head(n)
+    share = (t / sub["units"].sum() * 100).round(1)
+    return pd.DataFrame({"brand": t.index, "units": t.to_numpy(), "share_%": share.to_numpy()})
+
+
+def intermittency_by_channel(df: pd.DataFrame, market: str) -> pd.DataFrame:
+    g = df[df["market"] == market].groupby("channel")["units"]
+    out = pd.DataFrame(
+        {
+            "zero_%": (g.apply(lambda x: (x == 0).mean() * 100)).round(1),
+            "mean_units": g.mean().round(2),
+        }
+    ).sort_values("zero_%", ascending=False)
+    return out.reset_index()
+
+
+def per_market_tables(df: pd.DataFrame, market: str) -> dict[str, pd.DataFrame]:
+    up = uplift_row(df, market)
+    return {
+        "Channel share of volume": channel_share(df, market),
+        "Category split": category_split(df, market),
+        "Weekday seasonality": weekday_table(df, market),
+        "Monthly seasonality": monthly_table(df, market),
+        "Uplift (promo / holiday / weekend)": pd.DataFrame(
+            {"metric": list(up.keys()), "multiplier": list(up.values())}
+        ),
+        "Top brands": top_brands(df, market),
+        "Intermittency by channel": intermittency_by_channel(df, market),
+    }
+
+
+def channel_mix_matrix(df: pd.DataFrame) -> pd.DataFrame:
+    ch = df.groupby(["market", "channel"])["units"].sum().unstack(fill_value=0)
+    mix = (ch.div(ch.sum(axis=1), axis=0) * 100).round(1)
+    return mix.reset_index()
+
+
+def uplift_by_market(df: pd.DataFrame) -> pd.DataFrame:
+    rows = [{"market": m, **uplift_row(df, m)} for m in sorted(df["market"].unique())]
+    return pd.DataFrame(rows)
+
+
+def weather_by_market(df: pd.DataFrame) -> pd.DataFrame:
+    bev = df[df["category"] == "Beverage"]
+    rows = []
+    for m, sub in bev.groupby("market"):
+        agg = sub.groupby("date").agg(u=("units", "sum"), t=("temp_c", "mean"))
+        rows.append({"market": m, "temp_units_corr": round(float(agg.corr().iloc[0, 1]), 2)})
+    return pd.DataFrame(rows)
+
+
+def cross_market_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    return {
+        "Market Summary": market_summary(df),
+        "Channel Mix (%)": channel_mix_matrix(df),
+        "Uplift by Market": uplift_by_market(df),
+        "Weather (beverages)": weather_by_market(df),
+    }
+
+
 def make_figures(df: pd.DataFrame) -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
-
     # 1) Units by market
     by_market = df.groupby("market")["units"].sum().sort_values(ascending=False)
     _bar(by_market, "Total units by market", "fig_units_by_market.png")

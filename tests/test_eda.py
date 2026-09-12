@@ -30,3 +30,20 @@ def test_findings_keys_and_ranges():
     assert f["rows"] > 0
     assert 0 <= f["zero_pct"] <= 100
     assert f["promo_uplift"] > 1.0  # promotions must lift demand
+
+
+def test_market_wise_tables():
+    from cpg_forecast import eda
+
+    df = _df()
+    market = df["market"].iloc[0]
+    tables = eda.per_market_tables(df, market)
+    assert "Channel share of volume" in tables
+    assert tables["Channel share of volume"]["share_%"].sum() > 99  # shares ~100%
+    cross = eda.cross_market_tables(df)
+    assert set(cross) == {
+        "Market Summary",
+        "Channel Mix (%)",
+        "Uplift by Market",
+        "Weather (beverages)",
+    }

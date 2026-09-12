@@ -32,8 +32,9 @@ data:  ## Regenerate the full synthetic dataset (DVC-tracked)
 	$(BIN)/python -m cpg_forecast.data.generator --out data/synthetic/demand.parquet
 	$(BIN)/dvc add data/synthetic/demand.parquet
 
-eda:  ## Run Task 2 EDA (figures -> docs/eda/, findings -> docs/eda_findings.md)
+eda:  ## Run Task 2 EDA (figures -> docs/eda/, findings + market-wise docs/EDA.xlsx)
 	$(BIN)/python -m cpg_forecast.eda
+	$(BIN)/python scripts/make_eda_workbook.py
 
 summary:  ## Regenerate the Task 0 business + developer summary workbook
 	$(BIN)/python scripts/make_task0_summary.py

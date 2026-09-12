@@ -92,7 +92,7 @@ def build() -> Workbook:
             ["Inputs", "data/synthetic/demand.parquet (~985K rows, 960 series)"],
             [
                 "Outputs",
-                "7 figures in docs/eda/, findings in docs/eda_findings.md, and this workbook.",
+                "Market-wise docs/EDA.xlsx (per-market + cross-market sheets), 7 figures in docs/eda/, findings in docs/eda_findings.md, and this workbook.",
             ],
             [
                 "Reproducible",
@@ -198,6 +198,7 @@ def build() -> Workbook:
             ["Autocorrelation (ACF)", "Done ✅"],
             ["Promo / holiday / weather effects", "Done ✅"],
             ["Channel & hierarchy analysis", "Done ✅"],
+            ["Market-wise EDA workbook (docs/EDA.xlsx)", "Done ✅"],
             ["Figures (docs/eda/) + findings doc", "Done ✅"],
             ["Fixed 2 generator bugs found via EDA", "Done ✅"],
             ["Task2_Summary.xlsx (this file)", "Done ✅"],
