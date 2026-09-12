@@ -32,6 +32,7 @@ make setup     # create .venv on Python 3.12 + install deps + git hooks
 make test      # run smoke tests (should pass)
 make lint      # ruff + black checks
 make format    # auto-format + auto-fix
+make data      # regenerate the synthetic dataset (DVC-tracked)
 make summary   # regenerate the PepsiCo-styled Task 0 Excel summary
 make mockup    # open the Demand IQ product UI mockup in a browser
 make help      # list all targets

@@ -24,6 +24,7 @@ data/interim/*
 data/processed/*
 data/synthetic/*
 !data/**/.gitkeep
+!data/synthetic/*.dvc
 
 # ---- Models / artifacts ----
 models/*

@@ -169,9 +169,9 @@ def build() -> Workbook:
                 "data/synthetic/",
             ],
             [
-                "Remaining sub-step",
-                "DVC init + track the dataset with a remote.",
-                "Task 1 (pending)",
+                "Data versioning",
+                "DVC initialised; dataset tracked via demand.parquet.dvc (pointer in git, data out).",
+                "dvc add / .dvc/",
             ],
         ],
         [22, 62, 40],
@@ -250,7 +250,7 @@ def build() -> Workbook:
             ["Tests passing (determinism, schema, hierarchy, promo)", "Done ✅"],
             ["Full + sample Parquet generated locally", "Done ✅"],
             ["Task1_Summary.xlsx (this file)", "Done ✅"],
-            ["DVC init + track dataset", "Pending"],
+            ["DVC init + track dataset", "Done ✅"],
         ],
         [58, 12],
     )

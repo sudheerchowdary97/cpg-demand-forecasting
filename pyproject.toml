@@ -38,6 +38,10 @@ docs = [
     "openpyxl>=3.1",
     "pillow>=10.0",
 ]
+# Data versioning (Task 1). Local-first; a remote can be added later.
+data = [
+    "dvc>=3.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
