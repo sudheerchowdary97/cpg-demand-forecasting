@@ -32,8 +32,17 @@ make setup     # create .venv on Python 3.12 + install deps + git hooks
 make test      # run smoke tests (should pass)
 make lint      # ruff + black checks
 make format    # auto-format + auto-fix
+make summary   # regenerate the PepsiCo-styled Task 0 Excel summary
+make mockup    # open the Demand IQ product UI mockup in a browser
 make help      # list all targets
 ```
+
+## What the end product looks like
+
+See the interactive **[Demand IQ product mockup](docs/product_mockup/)** — a PepsiCo-styled
+demand-planner console (KPIs, 28-day forecast with confidence bands, stockout/overstock
+alerts, replenishment watchlist) that previews the business-facing deliverable (Task 17).
+Open it with `make mockup` or `open docs/product_mockup/index.html`.
 
 ---
 

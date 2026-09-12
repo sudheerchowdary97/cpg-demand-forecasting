@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test clean summary help
+.PHONY: setup install lint format test clean summary mockup help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -30,6 +30,9 @@ test:  ## Run the test suite
 
 summary:  ## Regenerate the Task 0 business + developer summary workbook
 	$(BIN)/python scripts/make_task0_summary.py
+
+mockup:  ## Open the Demand IQ product UI mockup in your browser
+	open docs/product_mockup/index.html
 
 clean:  ## Remove caches and build artifacts
 	rm -rf .pytest_cache .ruff_cache **/__pycache__ src/*.egg-info
