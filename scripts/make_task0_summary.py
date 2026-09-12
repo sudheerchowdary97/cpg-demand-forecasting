@@ -117,7 +117,11 @@ def build() -> Workbook:
             ],
             [
                 "Scope",
-                f"ALL PepsiCo food & beverage brands across geographies. Illustrative markets: {', '.join(B.GEOS)} ({n_geos} shown, {n_brands} distinct brands) — extensible to PepsiCo's 200+ markets.",
+                f"ALL PepsiCo food & beverage brands across geographies AND retail channels. Illustrative markets: {', '.join(B.GEOS)} ({n_geos} shown, {n_brands} distinct brands, {len(B.CHANNEL_TYPES)} channel types) — extensible to PepsiCo's 200+ markets.",
+            ],
+            [
+                "Forecast grain & hierarchy",
+                "Base series = SKU x store x day. Hierarchy: geography -> channel (route-to-market) -> retailer/banner -> store -> SKU. Channel & retailer are static store attributes (embeddings), NOT one flat 'retailer' field.",
             ],
             [
                 "Architecture approach",
@@ -178,6 +182,11 @@ def build() -> Workbook:
                 "Local brand portfolios",
                 "Each market carries a tailored mix (e.g., UK: Walkers + Lipton; AU: Smith's + Solo + Sobe; India/Pakistan: Kurkure + Sting).",
                 "The model must handle market-specific catalogs, not one global list.",
+            ],
+            [
+                "Channel / route-to-market",
+                "Each market spans traditional trade (kirana/kiryana — dominant in India/Pakistan), modern trade (DMart, Reliance, More, Tesco, Woolworths), convenience, e-commerce, q-commerce, wholesale and HoReCa — each with different pack mix, promo mechanics, volatility and store counts.",
+                "Forecasts must be channel-aware. Critically, DATA availability differs: modern trade has EPOS/POS, general trade has only distributor secondary sales.",
             ],
             [
                 "Pain point — Stockouts",
@@ -272,8 +281,8 @@ def build() -> Workbook:
             ],
             [
                 "Scale-ready data model",
-                "Brand/geo master data (kind, market coverage) encoded now to seed market x brand x category features later.",
-                "BRAND_INFO / GEOS",
+                "Brand/geo/channel master data (kind, market coverage, route-to-market) encoded now to seed market x channel x retailer x brand x category features later.",
+                "BRAND_INFO / GEOS / MARKET_CHANNELS",
             ],
             [
                 "Version control",
@@ -353,8 +362,8 @@ def build() -> Workbook:
             ],
             [
                 "Master data modeling",
-                "Encoding brand/geo attributes (kind, market coverage) up front.",
-                "Seeds the embeddings that let models share signal across geos where it helps.",
+                "Encoding brand/geo/channel attributes (kind, market coverage, route-to-market) up front.",
+                "Seeds the market/channel/retailer/brand embeddings that let models share signal where it helps.",
             ],
             [
                 "Reproducibility",
@@ -381,12 +390,45 @@ def build() -> Workbook:
     note = ws.cell(
         row=r,
         column=1,
-        value="Illustrative 4 of PepsiCo's 200+ markets. One global model scales to new markets via market/brand/category embeddings + hierarchical forecasting.",
+        value="Illustrative 4 of PepsiCo's 200+ markets, plus multiple channels per market (see Channels sheet). Models scale to new markets/channels via embeddings + hierarchical forecasting — chosen by backtest, not assumed.",
     )
     note.alignment = WRAP
     note.font = Font(italic=True, color=B.PEPSI_BLUE)
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=3)
     ws.row_dimensions[r].height = 30
+    ws.freeze_panes = "A3"
+    ws.sheet_view.showGridLines = False
+
+    # 5b) Channels & route-to-market ---------------------------------------
+    ws = wb.create_sheet("Channels & RtM")
+    _branded_title(ws, "Channels / Route-to-Market by Market — why it matters", 4)
+    _headers(
+        ws,
+        ["Market", "Channel", "Example retailers / banners", "Role & forecasting note"],
+        [16, 26, 40, 46],
+    )
+    r = 3
+    for market in B.GEOS:
+        chans = B.channels_for(market)
+        flag = B.GEOS[market][0]
+        for j, (ch, banners, note) in enumerate(chans):
+            ws.cell(row=r, column=1, value=(f"{flag} {market}" if j == 0 else "")).alignment = WRAP
+            ws.cell(row=r, column=2, value=ch).alignment = WRAP
+            ws.cell(row=r, column=3, value=banners).alignment = WRAP
+            ws.cell(row=r, column=4, value=note).alignment = WRAP
+            for c in range(1, 5):
+                ws.cell(row=r, column=c).border = BORDER
+            ws.row_dimensions[r].height = 30
+            r += 1
+    note = ws.cell(
+        row=r,
+        column=1,
+        value="Hierarchy: geography -> channel -> retailer/banner -> store -> SKU x day. Traditional trade dominates volume in India/Pakistan but has NO POS (distributor secondary sales); modern trade has EPOS. Channel & retailer become model embeddings; channel-segmented models are an option.",
+    )
+    note.alignment = WRAP
+    note.font = Font(italic=True, color=B.PEPSI_BLUE)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+    ws.row_dimensions[r].height = 44
     ws.freeze_panes = "A3"
     ws.sheet_view.showGridLines = False
 
@@ -433,18 +475,23 @@ def build() -> Workbook:
         ["Layer / Topic", "What it is", "Role / decision"],
         [
             [
+                "Forecast grain & hierarchy",
+                "Base series = SKU x store x day. Hierarchy: geography -> channel -> retailer/banner -> store -> SKU. Channel & retailer are static store attributes.",
+                "Fixes what a 'series' is; enables reconciliation and channel/retailer embeddings.",
+            ],
+            [
                 "Local baselines",
                 "One model per series/market (naive, seasonal-naive, ETS/ARIMA, LightGBM per group).",
                 "The BAR every deep model must beat, measured per market. Built in Task 4.",
             ],
             [
                 "Global multi-series model",
-                "One shared network trained across all series, conditioned on market/retailer/store/brand/category/SKU embeddings + local covariates (price, promo, calendar, weather).",
+                "One shared network trained across all series, conditioned on market/channel/retailer/store/brand/category/SKU embeddings + local covariates (price, promo, calendar, weather).",
                 "Shares response shapes and enables cold-start for new SKUs/stores/markets. Built Tasks 5-9.",
             ],
             [
                 "Segmented global models",
-                "Separate global models per natural cluster — e.g. Beverages vs Snacks (very different dynamics), and/or per region.",
+                "Separate global models per natural cluster — e.g. Beverages vs Snacks, by channel (traditional vs modern trade behave very differently), and/or per region.",
                 "Used where one pooled model shows negative transfer. Explored in Task 12.",
             ],
             [
@@ -635,6 +682,7 @@ def build() -> Workbook:
             ["Repo created & pushed to personal GitHub", "Done ✅"],
             ["PepsiCo branding: real logo + generated brand icons", "Done ✅"],
             ["Multi-geo, multi-brand scope defined (matrix + portfolio)", "Done ✅"],
+            ["Channel / route-to-market modeled per market (Channels sheet)", "Done ✅"],
             [
                 "Architecture framing: Local -> Global -> compare -> Hybrid (evidence-driven)",
                 "Done ✅",

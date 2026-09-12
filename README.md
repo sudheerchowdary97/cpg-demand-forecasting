@@ -98,12 +98,20 @@ We do **not** assume a single global model is the answer. The learning path is:
 
 **Local baseline → Global model → Market-level comparison → Hybrid refinement.**
 
+**Forecast grain & hierarchy:** base series = `SKU × store × day`, with the hierarchy
+`geography → channel (route-to-market) → retailer/banner → store → SKU`. Channel and
+retailer are **static store attributes** (embeddings) — not one flat "retailer" field.
+Channels differ sharply (traditional trade / kirana dominates volume in India & Pakistan
+with **no POS data**; modern trade, convenience, e-commerce, q-commerce, wholesale and
+HoReCa each have distinct pack mix, promos, volatility, and data availability).
+
 - **Local baselines** (Task 4) — per-market classical models; the bar every deep model must beat.
 - **Global multi-series model** (Tasks 5–9) — one shared network conditioned on
-  market / retailer / store / brand / category / SKU **embeddings** + local covariates;
+  market / channel / retailer / store / brand / category / SKU **embeddings** + local covariates;
   enables cold-start for new SKUs/stores/markets.
 - **Hybrid refinement** (Task 12) — **segmented global models** where useful (e.g. Beverages
-  vs Snacks), optional **geography fine-tuning / adapters**, and **hierarchical reconciliation**.
+  vs Snacks, or traditional vs modern trade), optional **geography fine-tuning / adapters**,
+  and **hierarchical reconciliation**.
 - **Selection by backtesting** — market-level rolling-origin WRMSSE decides how much pooling
   helps. A global model is *not* assumed to outperform local; the project proves it empirically.
 

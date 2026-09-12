@@ -115,6 +115,116 @@ def markets_for(brand: str) -> list[str]:
     return out
 
 
+# ---- Channel / route-to-market model --------------------------------------
+# In CPG, the CHANNEL a product sells through matters as much as the brand:
+# pack-size mix, promo mechanics, demand volatility, store counts, and DATA
+# AVAILABILITY all differ by channel. Hierarchy: geography -> channel ->
+# retailer (banner) -> store -> SKU x day. Channel + retailer are static store
+# attributes (embeddings), NOT a single flat "retailer" field.
+#
+# market -> list of (channel_type, example_banners, role / forecasting note)
+MARKET_CHANNELS: dict[str, list[tuple[str, str, str]]] = {
+    "India": [
+        (
+            "Traditional / General Trade",
+            "Kirana stores, paan shops",
+            "DOMINANT (~75-85% FMCG volume); no POS — distributor secondary sales, singles/small packs",
+        ),
+        (
+            "Modern Trade — Hypermarket",
+            "Reliance Smart Bazaar, DMart (Avenue Supermarts), Lulu Hypermarket",
+            "EPOS data; multipacks; feature/display promos",
+        ),
+        (
+            "Modern Trade — Supermarket",
+            "More Retail, Spencer's Retail, Ratnadeep, Triveni Supermarkets, Reliance Fresh, V-Mart",
+            "EPOS data; weekly seasonality; loyalty promos",
+        ),
+        (
+            "E-commerce",
+            "Amazon, Flipkart, JioMart",
+            "Search/deal-driven; larger packs; pantry-loading",
+        ),
+        (
+            "Q-commerce",
+            "Blinkit, Zepto, Swiggy Instamart, BigBasket",
+            "Impulse + top-up; weather/time-of-day sensitive; fast-growing",
+        ),
+        (
+            "Wholesale / Cash & Carry",
+            "Metro Cash & Carry, Udaan (B2B)",
+            "Bulk; feeds smaller GT outlets",
+        ),
+        (
+            "HoReCa / Foodservice",
+            "Restaurants, cafes, QSR, cinemas",
+            "On-premise; event/footfall driven",
+        ),
+    ],
+    "Pakistan": [
+        (
+            "Traditional / General Trade",
+            "Kiryana stores, general stores",
+            "DOMINANT; no POS — distributor secondary sales, singles/small packs",
+        ),
+        (
+            "Modern Trade — Hypermarket",
+            "Carrefour (MAF), Imtiaz, Metro/Makro",
+            "EPOS data; multipacks",
+        ),
+        (
+            "Modern Trade — Supermarket",
+            "Al-Fatah, Naheed, Chase Up, Green Valley",
+            "EPOS data; urban skew",
+        ),
+        ("E-commerce", "Daraz", "Deal-driven; growing"),
+        ("Q-commerce", "Bazaar, GrocerApp, Krave Mart", "Impulse + top-up; urban"),
+        ("Wholesale / Cash & Carry", "Metro/Makro", "Bulk; feeds GT"),
+        ("HoReCa / Foodservice", "Restaurants, dhabas, cafes", "On-premise; event driven"),
+    ],
+    "UK": [
+        (
+            "Modern Trade — Supermarket",
+            "Tesco, Sainsbury's, ASDA, Morrisons, Waitrose, M&S Food",
+            "DOMINANT; rich EPOS + loyalty data; feature/display promos",
+        ),
+        ("Discounters", "Aldi, Lidl", "Limited range; EDLP; own-label competition"),
+        (
+            "Convenience",
+            "Co-op, One Stop, Tesco Express, Sainsbury's Local",
+            "Top-up missions; singles/small packs; footfall driven",
+        ),
+        ("E-commerce", "Ocado, Amazon Fresh, retailer online", "Basket/subscription; larger packs"),
+        ("Wholesale / Cash & Carry", "Booker, Bestway", "Bulk; feeds convenience + HoReCa"),
+        (
+            "HoReCa / Foodservice",
+            "Pubs, restaurants, cafes, leisure",
+            "On-premise; seasonal/event driven",
+        ),
+    ],
+    "Australia": [
+        (
+            "Modern Trade — Supermarket",
+            "Woolworths, Coles",
+            "DOMINANT (duopoly); rich EPOS + loyalty; ranged promos",
+        ),
+        ("Discounters", "ALDI", "Limited range; EDLP; own-label"),
+        ("Independents / Convenience", "IGA (Metcash), 7-Eleven", "Local ranging; top-up; singles"),
+        ("Warehouse Club", "Costco", "Bulk multipacks; membership"),
+        ("E-commerce", "Woolworths/Coles online, Amazon AU", "Basket-driven; larger packs"),
+        ("HoReCa / Foodservice", "Cafes, restaurants, pubs", "On-premise; event driven"),
+    ],
+}
+
+# Distinct channel types across all markets (for embeddings / segmentation).
+CHANNEL_TYPES: list[str] = sorted({c for chans in MARKET_CHANNELS.values() for c, _b, _n in chans})
+
+
+def channels_for(market: str) -> list[tuple[str, str, str]]:
+    """Return the (channel, banners, note) list for a given market."""
+    return MARKET_CHANNELS.get(market, [])
+
+
 def _slug(name: str) -> str:
     return name.lower().replace(" ", "").replace("'", "")
 

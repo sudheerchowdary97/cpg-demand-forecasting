@@ -159,6 +159,10 @@
       <select id="brand"></select>
     </div>
     <div class="field">
+      <label>Channel</label>
+      <select id="channelSel"></select>
+    </div>
+    <div class="field">
       <label>Forecast horizon</label>
       <div class="seg" id="horizon">
         <button data-v="14">14d</button>
@@ -271,14 +275,51 @@ const BRAND = {
   "Aquafina":{k:"Beverage",c:"#00A9E0",t:"#fff",i:"A"},
 };
 const PACKS = { Beverage:["330ml Can 24pk","500ml PET 12pk","1.5L PET 6pk","2L PET"], Food:["45g","75g","150g Share","200g Party"] };
-const RETAILERS = { "UK":["Tesco","Sainsbury's","ASDA"], "Australia":["Woolworths","Coles","IGA"], "India":["Reliance","DMart","BigBasket"], "Pakistan":["Imtiaz","Carrefour","Metro"] };
+// Channel / route-to-market per market (mirrors branding.py MARKET_CHANNELS)
+const CHAN = {
+  "UK":[
+    {c:"Modern Trade", b:["Tesco","Sainsbury's","ASDA","Morrisons","Waitrose"]},
+    {c:"Discounter", b:["Aldi","Lidl"]},
+    {c:"Convenience", b:["Co-op","One Stop","Tesco Express"]},
+    {c:"E-commerce", b:["Ocado","Amazon Fresh"]},
+    {c:"Wholesale", b:["Booker","Bestway"]},
+  ],
+  "Australia":[
+    {c:"Modern Trade", b:["Woolworths","Coles"]},
+    {c:"Discounter", b:["ALDI"]},
+    {c:"Convenience", b:["IGA","7-Eleven"]},
+    {c:"Warehouse Club", b:["Costco"]},
+    {c:"E-commerce", b:["Woolworths Online","Amazon AU"]},
+  ],
+  "India":[
+    {c:"General Trade (Kirana)", b:["Kirana Store","Paan Shop"]},
+    {c:"Modern Trade", b:["Reliance Smart Bazaar","DMart","More Retail","Spencer's","Ratnadeep","Triveni"]},
+    {c:"E-commerce", b:["Amazon","Flipkart","JioMart"]},
+    {c:"Q-commerce", b:["Blinkit","Zepto","Swiggy Instamart","BigBasket"]},
+    {c:"Wholesale", b:["Metro C&C","Udaan"]},
+  ],
+  "Pakistan":[
+    {c:"General Trade (Kiryana)", b:["Kiryana Store","General Store"]},
+    {c:"Modern Trade", b:["Carrefour","Imtiaz","Al-Fatah","Naheed","Chase Up"]},
+    {c:"E-commerce", b:["Daraz"]},
+    {c:"Q-commerce", b:["Bazaar","GrocerApp"]},
+    {c:"Wholesale", b:["Metro/Makro"]},
+  ],
+};
+function storeName(rnd){
+  const chans = CHAN[state.market] || [];
+  let pool = [];
+  if(state.channel && state.channel!=="All"){ const f = chans.find(x=>x.c===state.channel); pool = f? f.b : []; }
+  if(!pool.length) pool = chans.flatMap(x=>x.b);
+  return pool.length ? pool[Math.floor(rnd()*pool.length)] : "Store";
+}
 
 // ---------- Seeded RNG ----------
 function hash(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 
 // ---------- State ----------
-const state = { market:"UK", category:"All", brand:"", horizon:28 };
+const state = { market:"UK", category:"All", brand:"", channel:"All", horizon:28 };
 
 // ---------- Data generation ----------
 function marketScale(m){ return {UK:1.0, Australia:0.7, India:2.4, Pakistan:1.3}[m] || 1; }
@@ -410,7 +451,7 @@ function renderTable(){
       if(cover<7){ risk=["bad","Stockout risk"]; action=`Expedite order · +${fmt(fc-onhand)} u`; }
       else if(cover>35){ risk=["warn","Overstock"]; action="Hold / redistribute"; }
       else { risk=["good","Healthy"]; action="Auto-replenish"; }
-      rows.push({b,pk,fc,onhand,cover,risk,action, store: RETAILERS[state.market][Math.floor(rnd()*3)]});
+      rows.push({b,pk,fc,onhand,cover,risk,action, store: storeName(rnd)});
     });
   });
   rows.sort((a,b)=> a.cover-b.cover);
@@ -432,7 +473,7 @@ function renderAlerts(){
   const rnd = mulberry32(hash(state.market+state.brand+"al"));
   const brands = currentBrands();
   const pick = ()=> brands[Math.floor(rnd()*brands.length)];
-  const store = ()=> RETAILERS[state.market][Math.floor(rnd()*3)];
+  const store = ()=> storeName(rnd);
   const items = [
     {sev:"bad", t:`Stockout risk: ${pick()}`, m:`${store()} · days cover < 5`, a:"Recommend expedite replenishment before weekend uplift"},
     {sev:"warn", t:`Promotion starts in 3 days: ${pick()}`, m:`${store()} · expected +45% units`, a:"Pre-build stock; raise safety stock for the promo window"},
@@ -536,11 +577,16 @@ function fillBrand(){
   const opts = ['<option value="">All brands</option>'].concat(currentBrands().map(b=>`<option>${b}</option>`));
   sel.innerHTML = opts.join(""); sel.value = state.brand;
 }
+function fillChannel(){
+  const sel = document.getElementById("channelSel");
+  const opts = ['<option value="All">All channels</option>'].concat((CHAN[state.market]||[]).map(x=>`<option>${x.c}</option>`));
+  sel.innerHTML = opts.join(""); sel.value = state.channel;
+}
 function initControls(){
   const m = document.getElementById("market");
   m.innerHTML = Object.keys(GEOS).map(k=>`<option>${GEOS[k].flag} ${k}</option>`).join("");
   m.value = `${GEOS[state.market].flag} ${state.market}`;
-  m.addEventListener("change", ()=>{ state.market = m.value.replace(/^\S+\s/,""); state.brand=""; fillBrand(); renderAll(); });
+  m.addEventListener("change", ()=>{ state.market = m.value.replace(/^\S+\s/,""); state.brand=""; state.channel="All"; fillBrand(); fillChannel(); renderAll(); });
 
   document.getElementById("category").addEventListener("click", e=>{
     const b=e.target.closest("button"); if(!b) return;
@@ -553,6 +599,7 @@ function initControls(){
     state.horizon=+b.dataset.v; renderAll();
   });
   document.getElementById("brand").addEventListener("change", e=>{ state.brand=e.target.value; renderAll(); });
+  document.getElementById("channelSel").addEventListener("change", e=>{ state.channel=e.target.value; renderAll(); });
 
   const today = new Date();
   document.getElementById("asofOpt").textContent = today.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
@@ -562,7 +609,7 @@ function initControls(){
 let secs=0;
 setInterval(()=>{ secs+=5; const u=document.getElementById("updated"); u.textContent = secs<60?`updated ${secs}s ago`:`updated ${Math.floor(secs/60)}m ago`; }, 5000);
 
-initControls(); fillBrand(); renderAll();
+initControls(); fillBrand(); fillChannel(); renderAll();
 </script>
 </body>
 </html>
