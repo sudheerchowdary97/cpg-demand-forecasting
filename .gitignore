@@ -42,3 +42,6 @@ docs/brands_icons/
 
 # ---- OS ----
 .DS_Store
+
+# ---- Office temp lock files ----
+~$*
