@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Task 0 — Foundations &amp; Architecture | PepsiCo Demand Forecasting</title>
+<style>
+  :root{
+    --blue:#004b93; --blue-dark:#00307a; --blue-light:#e8f1fb; --red:#eb1700;
+    --ink:#0b1f33; --muted:#5b7086; --bg:#eef3f9; --card:#fff; --line:#e2e9f2;
+    --good:#12894f; --good-bg:#e6f4ec; --warn:#b7791f; --warn-bg:#fbf3e2; --blue-bg:#ddebf7;
+    --shadow:0 1px 3px rgba(10,31,51,.08),0 6px 18px rgba(10,31,51,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5}
+  a{color:var(--blue)}
+  header.hero{background:var(--card);border-bottom:1px solid var(--line);padding:22px 26px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:20}
+  header.hero img{height:40px}
+  .htext{border-left:2px solid var(--line);padding-left:16px}
+  .htext h1{margin:0;font-size:20px;color:var(--blue)}
+  .htext .sub{color:var(--muted);font-size:13px}
+  .spacer{flex:1}
+  .badge{background:var(--good-bg);color:var(--good);font-weight:700;padding:6px 12px;border-radius:999px;font-size:13px}
+  nav{position:sticky;top:84px;z-index:15;background:var(--blue);display:flex;gap:4px;flex-wrap:wrap;padding:8px 26px}
+  nav a{color:#cfe0f2;text-decoration:none;font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:6px}
+  nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+  main{max-width:1180px;margin:0 auto;padding:26px}
+  section{margin-bottom:30px;scroll-margin-top:140px}
+  h2{font-size:17px;color:var(--blue);border-bottom:2px solid var(--blue-light);padding-bottom:6px;margin:0 0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .v{font-size:26px;font-weight:800;color:var(--blue);letter-spacing:-.5px}
+  .stat .l{color:var(--muted);font-size:12px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+  .check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+  .check .tick{color:var(--good);font-weight:800}
+  .check b{display:block}
+  .check span{color:var(--muted);font-size:12.5px}
+  .chip{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:700;margin:3px 4px 3px 0;color:#fff}
+  .chip.light{color:var(--blue);background:var(--blue-light)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);border-radius:8px;padding:8px 12px;font-weight:700;font-size:13px}
+  /* flow diagram */
+  .flow{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .node{background:var(--blue);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;text-align:center}
+  .node small{display:block;font-weight:500;opacity:.85;font-size:11px}
+  .node.alt{background:var(--card);color:var(--blue);border:2px solid var(--blue)}
+  .arrow{color:var(--blue);font-size:20px;font-weight:800}
+  .note{background:var(--warn-bg);border-left:4px solid var(--warn);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px}
+  .note.blue{background:var(--blue-bg);border-color:var(--blue)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .tag.now{background:var(--good-bg);color:var(--good)} .tag.plan{background:var(--warn-bg);color:var(--warn)}
+  .tag.done{background:var(--good-bg);color:var(--good)} .tag.next{background:var(--blue-bg);color:var(--blue)}
+  .deliv{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .deliv a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
+  .deliv a:hover{border-color:var(--blue)}
+  .deliv .t{font-weight:800;color:var(--blue)}
+  .deliv .d{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .rm{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+  .rm .n{background:var(--blue);color:#fff;border-radius:8px;text-align:center;font-weight:800;padding:4px 0}
+  .rm .n.done{background:var(--good)} .rm .n.next{background:var(--blue-dark)}
+  footer{max-width:1180px;margin:0 auto;padding:0 26px 40px;color:var(--muted);font-size:11.5px}
+  @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.grid2,.checks,.deliv{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <header class="hero">
+    <img src="../../assets/brand/official/pepsico_logo.png" alt="PepsiCo" />
+    <div class="htext">
+      <h1>Task 0 — Foundations &amp; Architecture</h1>
+      <div class="sub">CPG Demand Forecasting · end-to-end deep-learning learning project</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="badge">✓ Task 0 Complete · 1 of 19</span>
+  </header>
+
+  <nav>
+    <a href="#done">What was done</a>
+    <a href="#scope">Scope</a>
+    <a href="#hierarchy">Hierarchy</a>
+    <a href="#arch">Architecture</a>
+    <a href="#stack">Tech stack</a>
+    <a href="#deliverables">Deliverables</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+
+  <main>
+    <section>
+      <div class="stats">
+        <div class="stat"><div class="v">1 / 19</div><div class="l">Tasks complete (0–18)</div></div>
+        <div class="stat"><div class="v">4</div><div class="l">Markets (UK · AU · IN · PK)</div></div>
+        <div class="stat"><div class="v">20</div><div class="l">Brands (food + beverage)</div></div>
+        <div class="stat"><div class="v">7+</div><div class="l">Channel types</div></div>
+        <div class="stat"><div class="v">100%</div><div class="l">Runs on Mac (synthetic data)</div></div>
+      </div>
+    </section>
+
+    <!-- WHAT WAS DONE -->
+    <section id="done">
+      <h2>What was done in Task 0</h2>
+      <div class="card">
+        <div class="checks">
+          <div class="check"><span class="tick">✓</span><div><b>Reproducible project skeleton</b><span>src/ layout package, Python 3.12 venv, pyproject single-source deps</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Code quality gate</b><span>ruff + black wired via pre-commit; runs on every commit</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Automated tests</b><span>pytest smoke tests passing (green)</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>One-command workflows</b><span>Makefile: setup / lint / format / test / summary / roadmap / mockup</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Data/model hygiene</b><span>data/ &amp; models/ git-ignored (DVC-bound); .gitkeep folders</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Version control</b><span>standalone repo, personal (non-Apple) identity, pushed to GitHub</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Scope defined</b><span>multi-geo, multi-brand, multi-channel PepsiCo portfolio</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Architecture decided</b><span>evidence-driven Local → Global → Hybrid (not assumed)</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Data approach chosen</b><span>synthetic-primary (high realism) + M5 optional later</span></div></div>
+          <div class="check"><span class="tick">✓</span><div><b>Branded reporting</b><span>reusable branding module; Excel workbooks + product mockup</span></div></div>
+        </div>
+        <div class="note">Deliberately <b>no models yet</b> — Task 0 is tooling and decisions. Deep learning starts at Task 5.</div>
+      </div>
+    </section>
+
+    <!-- SCOPE -->
+    <section id="scope">
+      <h2>Project scope</h2>
+      <div class="grid2">
+        <div class="card">
+          <b>Markets (illustrative 4 of 200+)</b>
+          <div style="margin:10px 0">
+            <span class="pill">🇬🇧 UK</span> <span class="pill">🇦🇺 Australia</span>
+            <span class="pill">🇮🇳 India</span> <span class="pill">🇵🇰 Pakistan</span>
+          </div>
+          <b>Channels / route-to-market</b>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">
+            Traditional / General Trade (kirana — dominant &amp; no POS in IN/PK) · Modern Trade (DMart, Reliance, More, Spencer's, Tesco, Woolworths) · Convenience · E-commerce · Q-commerce (Blinkit, Zepto) · Wholesale · HoReCa
+          </div>
+        </div>
+        <div class="card">
+          <b>Brands in scope (20)</b>
+          <div style="margin-top:10px">
+            <span class="chip" style="background:#FFD200;color:#004B93">Lay's</span>
+            <span class="chip" style="background:#E4002B">Walkers</span>
+            <span class="chip" style="background:#E8A33D;color:#004B93">Smith's</span>
+            <span class="chip" style="background:#D71920">Doritos</span>
+            <span class="chip" style="background:#F58025">Cheetos</span>
+            <span class="chip" style="background:#004B93">Ruffles</span>
+            <span class="chip" style="background:#C8102E">Quaker</span>
+            <span class="chip" style="background:#E4002B">Kurkure</span>
+            <span class="chip" style="background:#2B2B2B">Red Rock Deli</span>
+            <span class="chip" style="background:#004B93">Pepsi</span>
+            <span class="chip" style="background:#111">Pepsi Max</span>
+            <span class="chip" style="background:#0A8A3B">7UP</span>
+            <span class="chip" style="background:#F9A61A">Tropicana</span>
+            <span class="chip" style="background:#F6C700;color:#004B93">Lipton</span>
+            <span class="chip" style="background:#F2A900;color:#004B93">Solo</span>
+            <span class="chip" style="background:#3FA535">Mountain Dew</span>
+            <span class="chip" style="background:#F47920">Gatorade</span>
+            <span class="chip" style="background:#6CBE45">Sobe</span>
+            <span class="chip" style="background:#E4002B">Sting</span>
+            <span class="chip" style="background:#00A9E0">Aquafina</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HIERARCHY -->
+    <section id="hierarchy">
+      <h2>Forecast grain &amp; hierarchy</h2>
+      <div class="card">
+        <div class="flow">
+          <div class="node">🌍 Geography<small>UK / AU / IN / PK</small></div><span class="arrow">→</span>
+          <div class="node">🛒 Channel<small>GT / MT / e-com…</small></div><span class="arrow">→</span>
+          <div class="node">🏬 Retailer<small>DMart, Tesco…</small></div><span class="arrow">→</span>
+          <div class="node">🏪 Store<small>individual outlet</small></div><span class="arrow">→</span>
+          <div class="node alt">📦 SKU × day<small>base series</small></div>
+        </div>
+        <div class="note blue">Base time series = <b>SKU × store × day</b> (28-day horizon). Channel &amp; retailer are <b>static store attributes → model embeddings</b>, not a flat field. Forecasts reconcile up the hierarchy (bottom-up / MinT).</div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="arch">
+      <h2>Architecture — evidence-driven (Local → Global → Hybrid)</h2>
+      <div class="card">
+        <div class="flow">
+          <div class="node">1 · Local baselines<small>per-market bar (Task 4)</small></div><span class="arrow">→</span>
+          <div class="node">2 · Global model<small>+ embeddings (Tasks 5–9)</small></div><span class="arrow">→</span>
+          <div class="node">3 · Market comparison<small>backtest per market</small></div><span class="arrow">→</span>
+          <div class="node alt">4 · Hybrid refinement<small>segmented + fine-tune (Task 12)</small></div>
+        </div>
+        <div class="grid2" style="margin-top:14px">
+          <div>
+            <b>Global model conditioned on embeddings</b>
+            <div style="margin-top:8px">
+              <span class="chip light">market</span><span class="chip light">channel</span><span class="chip light">retailer</span>
+              <span class="chip light">store</span><span class="chip light">brand</span><span class="chip light">category</span><span class="chip light">SKU</span>
+            </div>
+            <div style="color:var(--muted);font-size:12.5px;margin-top:6px">+ covariates: price, promo, calendar/holidays, weather.</div>
+          </div>
+          <div>
+            <b>Hybrid options</b>
+            <div style="color:var(--muted);font-size:12.5px;margin-top:8px">
+              Segmented globals (Beverages vs Snacks, or by channel) · geography fine-tuning / adapters · hierarchical reconciliation.
+            </div>
+          </div>
+        </div>
+        <div class="note">A global model is <b>NOT assumed</b> to beat local — how much to pool is proven by market-level rolling-origin WRMSSE backtests.</div>
+        <div class="note blue"><b>Data residency:</b> cross-border pooling is allowed here (public M5 proxy). In a real PepsiCo deployment, raw data may need to stay in-region → region-segmented globals, local fine-tuning, or federated learning.</div>
+      </div>
+    </section>
+
+    <!-- TECH STACK -->
+    <section id="stack">
+      <h2>Tech stack &amp; Mac-local feasibility</h2>
+      <div class="card">
+        <p style="margin-top:0;color:var(--muted)">Because the data is <b>synthetic (small)</b>, the whole stack runs <b>local-first on the Mac</b> — including deep learning via PyTorch <b>MPS</b>. Cloud is optional (scale / real deploy). Only <b>Azure</b> is cloud-only; MATLAB is skipped (licensed).</p>
+        <table>
+          <thead><tr><th>Layer</th><th>Key tools</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Language &amp; core</td><td>Python 3.12, NumPy, pandas, PyArrow, Matplotlib, pydantic</td><td><span class="tag now">Installed</span></td></tr>
+            <tr><td>Quality &amp; tooling</td><td>ruff, black, pre-commit, pytest, Makefile, git/gh</td><td><span class="tag now">Installed</span></td></tr>
+            <tr><td>Docs &amp; reporting</td><td>openpyxl, Pillow, prompt-engineering / golden-prompt-patterns, superpowers</td><td><span class="tag now">In use</span></td></tr>
+            <tr><td>Classical baselines</td><td>statsmodels, pmdarima, Prophet, VAR, LightGBM, XGBoost</td><td><span class="tag plan">Task 4</span></td></tr>
+            <tr><td>Deep learning</td><td>PyTorch (MPS), Lightning, pytorch-forecasting, darts</td><td><span class="tag plan">Task 5+</span></td></tr>
+            <tr><td>Tracking / HPO</td><td>MLflow, Optuna</td><td><span class="tag plan">Task 4/11</span></td></tr>
+            <tr><td>Serving / deploy</td><td>FastAPI, Docker, GitHub Actions, Cloud Run/Render, local k8s</td><td><span class="tag plan">Task 14/15</span></td></tr>
+            <tr><td>Monitoring / app</td><td>Evidently, Prometheus+Grafana, Streamlit, Claude API</td><td><span class="tag plan">Task 16/17</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note blue">Full detail: <b>TechStack.xlsx</b> → Mac-Local Feasibility sheet (43 areas: 28 fully local, 8 local-capable, 2 cloud-only, 5 soft).</div>
+      </div>
+    </section>
+
+    <!-- DELIVERABLES -->
+    <section id="deliverables">
+      <h2>Task 0 deliverables</h2>
+      <div class="deliv">
+        <a href="../Task0_Summary.xlsx"><div class="t">📊 Task0_Summary.xlsx</div><div class="d">11 sheets: scope, brands, Channels &amp; RtM, architecture, roadmap, checklist</div></a>
+        <a href="../TechStack.xlsx"><div class="t">🧰 TechStack.xlsx</div><div class="d">Full stack + Mac-Local Feasibility of the 43-area skills matrix</div></a>
+        <a href="../Roadmap.xlsx"><div class="t">🗺️ Roadmap.xlsx</div><div class="d">Task 0–18: overview, roadmap, and per-task flows &amp; deliverables</div></a>
+        <a href="../product_mockup/index.html"><div class="t">🖥️ Demand IQ mockup</div><div class="d">Interactive end-goal UI (market/channel/brand filters, forecast + intervals)</div></a>
+        <a href="https://github.com/sudheerchowdary97/cpg-demand-forecasting"><div class="t">🔗 GitHub repo</div><div class="d">Public, personal — each task committed &amp; pushed on completion</div></a>
+        <a href="../../README.md"><div class="t">📄 README</div><div class="d">Roadmap + architecture + data-residency notes</div></a>
+      </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section id="roadmap">
+      <h2>Roadmap (Task 0 → 18)</h2>
+      <div class="card" id="rmlist"></div>
+    </section>
+  </main>
+
+  <footer>
+    <b>Sample / mockup</b> — illustrative report for an independent learning project.
+    NOT affiliated with, authorized by, or endorsed by PepsiCo, Inc. All trademarks belong to their owners.
+    Figures &amp; scope are illustrative; data is the public M5 (Walmart) proxy, not real PepsiCo data.
+  </footer>
+
+<script>
+const ROADMAP = [
+  [0,"Foundations & environment","done"],[1,"Problem framing & synthetic data (DVC)","next"],
+  [2,"EDA & time-series understanding","plan"],[3,"Data pipeline & feature engineering","plan"],
+  [4,"Local baselines & eval harness","plan"],[5,"MLP forecaster","plan"],
+  [6,"RNN → LSTM → GRU","plan"],[7,"Seq2Seq + Attention","plan"],
+  [8,"Temporal Conv Nets (TCN)","plan"],[9,"Transformer / TFT (global model)","plan"],
+  [10,"Probabilistic (DeepAR / N-BEATS / quantiles)","plan"],[11,"Tracking, HPO & model selection","plan"],
+  [12,"Training-as-code + hybrid refinement","plan"],[13,"Export & optimize (ONNX / quantize)","plan"],
+  [14,"Serving API (FastAPI + Docker)","plan"],[15,"Cloud deploy + CI/CD","plan"],
+  [16,"Monitoring, drift & retraining","plan"],[17,"Demo app + LLM insight layer","plan"],
+  [18,"Docs, presentation & portfolio","plan"],
+];
+const label={done:"Done",next:"Next",plan:"Planned"};
+document.getElementById("rmlist").innerHTML = ROADMAP.map(([n,name,st])=>`
+  <div class="rm">
+    <div class="n ${st==='done'?'done':st==='next'?'next':''}">${n}</div>
+    <div>${name}</div>
+    <div><span class="tag ${st==='done'?'done':st==='next'?'next':'plan'}">${label[st]}</span></div>
+  </div>`).join("");
+</script>
+</body>
+</html>

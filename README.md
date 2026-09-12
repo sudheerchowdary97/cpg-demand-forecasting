@@ -44,6 +44,9 @@ demand-planner console (KPIs, 28-day forecast with confidence bands, stockout/ov
 alerts, replenishment watchlist) that previews the business-facing deliverable (Task 17).
 Open it with `make mockup` or `open docs/product_mockup/index.html`.
 
+For a summary of Task 0 (architecture + what was done), see the
+**[Task 0 report](docs/task0_report/)** — `make task0`.
+
 ---
 
 ## Project layout

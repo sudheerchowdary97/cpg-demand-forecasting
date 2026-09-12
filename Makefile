@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test clean summary techstack roadmap mockup help
+.PHONY: setup install lint format test clean summary techstack roadmap mockup task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -39,6 +39,9 @@ roadmap:  ## Regenerate the roadmap workbook (docs/Roadmap.xlsx)
 
 mockup:  ## Open the Demand IQ product UI mockup in your browser
 	open docs/product_mockup/index.html
+
+task0:  ## Open the Task 0 report (architecture + what was done) in your browser
+	open docs/task0_report/index.html
 
 clean:  ## Remove caches and build artifacts
 	rm -rf .pytest_cache .ruff_cache **/__pycache__ src/*.egg-info
