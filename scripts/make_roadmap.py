@@ -93,7 +93,7 @@ ROADMAP: list[tuple[str, str, str, str, str, str, str, str, str]] = [
         "Data modeling, DVC, pydantic schema, DuckDB/SQL",
         "Versioned synthetic dataset + generator + spec",
         "Mac",
-        "Next",
+        "Done",
     ),
     (
         "2",
@@ -104,7 +104,7 @@ ROADMAP: list[tuple[str, str, str, str, str, str, str, str, str]] = [
         "Reproducible notebooks, plotting",
         "EDA notebook + findings doc",
         "Mac",
-        "Planned",
+        "Next",
     ),
     (
         "3",

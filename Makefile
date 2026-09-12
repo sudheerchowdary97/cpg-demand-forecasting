@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test clean summary techstack roadmap mockup task0 help
+.PHONY: setup install lint format test clean summary task1-summary techstack roadmap mockup task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -30,6 +30,9 @@ test:  ## Run the test suite
 
 summary:  ## Regenerate the Task 0 business + developer summary workbook
 	$(BIN)/python scripts/make_task0_summary.py
+
+task1-summary:  ## Regenerate the Task 1 summary workbook (docs/Task1_Summary.xlsx)
+	$(BIN)/python scripts/make_task1_summary.py
 
 techstack:  ## Regenerate the technology-stack workbook (docs/TechStack.xlsx)
 	$(BIN)/python scripts/make_techstack.py

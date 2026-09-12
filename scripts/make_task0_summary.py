@@ -538,14 +538,14 @@ def build() -> Workbook:
             "Problem framing & data (DVC)",
             "forecast task formulation",
             "data versioning",
-            "Next",
+            "Done ✅",
         ],
         [
             "2",
             "EDA & time-series understanding",
             "seasonality, stationarity",
             "reproducible notebooks",
-            "Planned",
+            "Next",
         ],
         [
             "3",
