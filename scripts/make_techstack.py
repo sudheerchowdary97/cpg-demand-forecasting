@@ -195,16 +195,22 @@ STACK: list[tuple[str, list[tuple[str, str, str, str, str]]]] = [
     (
         "Deep learning",
         [
-            ("PyTorch", "Core deep-learning framework", "Planned", "Task 5", "Cloud (GPU)"),
-            ("PyTorch Lightning", "Training-loop framework", "Planned", "Task 5", "Cloud (GPU)"),
+            ("PyTorch", "Core deep-learning framework", "Planned", "Task 5", "Mac (MPS) / Cloud"),
+            (
+                "PyTorch Lightning",
+                "Training-loop framework",
+                "Planned",
+                "Task 5",
+                "Mac (MPS) / Cloud",
+            ),
             (
                 "pytorch-forecasting",
                 "TFT / DeepAR / N-BEATS implementations",
                 "Planned",
                 "Task 9/10",
-                "Cloud (GPU)",
+                "Mac (MPS) / Cloud",
             ),
-            ("darts", "Time-series model library", "Planned", "Task 6-10", "Cloud (GPU)"),
+            ("darts", "Time-series model library", "Planned", "Task 6-10", "Mac (MPS) / Cloud"),
         ],
     ),
     (
@@ -217,7 +223,7 @@ STACK: list[tuple[str, list[tuple[str, str, str, str, str]]]] = [
                 "Task 4/11",
                 "Both",
             ),
-            ("Optuna", "Hyperparameter optimization", "Planned", "Task 11", "Cloud (GPU)"),
+            ("Optuna", "Hyperparameter optimization", "Planned", "Task 11", "Mac / Cloud"),
         ],
     ),
     (
@@ -324,6 +330,253 @@ STACK: list[tuple[str, list[tuple[str, str, str, str, str]]]] = [
 ]
 
 
+# ---- Mac-local feasibility of the full skills matrix (synthetic data) ----
+# (Area, Technologies, Verdict, How on the Mac, Task)
+LOCAL_FEAS: list[tuple[str, str, str, str, str]] = [
+    ("Programming", "Python", "Fully local", "Python 3.12 venv", "Task 0"),
+    (
+        "Additional languages",
+        "R, Scala, MATLAB",
+        "Optional/soft",
+        "R via brew; Scala on the JVM (with Spark); MATLAB is licensed -> skip",
+        "Optional",
+    ),
+    (
+        "Python ML production",
+        "scikit-learn, ML pipelines",
+        "Fully local",
+        "sklearn Pipelines on synthetic data",
+        "Task 4-5",
+    ),
+    (
+        "Data science",
+        "ML, statistics, business modeling",
+        "Fully local",
+        "numpy / scipy / sklearn + notebooks",
+        "All",
+    ),
+    (
+        "Python engineering",
+        "OOP, modular programming",
+        "Fully local",
+        "src/ package layout (in progress)",
+        "Task 0+",
+    ),
+    ("Testing", "pytest / unit testing", "Fully local", "pytest wired via pre-commit", "Task 0"),
+    ("Code quality", "PEP8, Black", "Fully local", "ruff + black + pre-commit", "Task 0"),
+    (
+        "Scientific Python",
+        "pandas, NumPy, SciPy, scikit-learn, Matplotlib",
+        "Fully local",
+        "core deps already installed",
+        "Task 1-4",
+    ),
+    (
+        "Classical time series",
+        "ARIMA, SARIMA, SARIMAX",
+        "Fully local",
+        "statsmodels, pmdarima",
+        "Task 4",
+    ),
+    (
+        "Statistical forecasting",
+        "Exponential Smoothing, ETS, state-space",
+        "Fully local",
+        "statsmodels",
+        "Task 4",
+    ),
+    ("Prophet", "Prophet", "Fully local", "pip install prophet (cmdstanpy) — CPU", "Task 4"),
+    ("Multivariate time series", "VAR", "Fully local", "statsmodels VAR", "Task 4"),
+    (
+        "ML forecasting",
+        "XGBoost, LightGBM",
+        "Fully local",
+        "CPU training on synthetic data",
+        "Task 4",
+    ),
+    (
+        "Deep learning",
+        "LSTM, GRU (PyTorch)",
+        "Fully local",
+        "PyTorch MPS (Metal) — small synthetic data trains on M3 Pro",
+        "Task 6",
+    ),
+    (
+        "Transformer forecasting",
+        "TFT / Transformer TS",
+        "Local-capable",
+        "PyTorch MPS; small models; cloud only if scaling up",
+        "Task 9",
+    ),
+    (
+        "Time-series features",
+        "lags, rolling stats, calendar, exogenous",
+        "Fully local",
+        "pandas feature pipeline",
+        "Task 3",
+    ),
+    (
+        "Trend & seasonality",
+        "decomposition, seasonal patterns",
+        "Fully local",
+        "statsmodels STL",
+        "Task 2",
+    ),
+    (
+        "Anomaly detection",
+        "TS anomaly / outlier detection",
+        "Fully local",
+        "statsmodels / sklearn / alibi-detect (CPU)",
+        "Task 2/16",
+    ),
+    (
+        "Backtesting",
+        "rolling / expanding window",
+        "Fully local",
+        "custom harness + sklearn TimeSeriesSplit",
+        "Task 4",
+    ),
+    (
+        "Forecast metrics",
+        "MAE, RMSE, MAPE, sMAPE, WAPE, WRMSSE",
+        "Fully local",
+        "metrics module",
+        "Task 4",
+    ),
+    (
+        "Bayesian modeling",
+        "Bayesian inference, probabilistic",
+        "Fully local",
+        "PyMC / NumPyro — CPU sampling on small data",
+        "Task 10",
+    ),
+    (
+        "Probabilistic forecasting",
+        "prediction distributions / uncertainty",
+        "Fully local",
+        "quantile loss, DeepAR (small), PyMC",
+        "Task 10",
+    ),
+    (
+        "Big data",
+        "Apache Spark",
+        "Local-capable",
+        "PySpark local[*] mode + Java (brew) — single machine",
+        "Task 3/12",
+    ),
+    (
+        "Relational databases",
+        "SQL, RDBMS",
+        "Fully local",
+        "DuckDB + SQLite (serverless); Postgres via Docker",
+        "Task 1/3",
+    ),
+    ("NoSQL", "NoSQL databases", "Local-capable", "MongoDB via Docker (optional)", "Optional"),
+    (
+        "Azure ML",
+        "Azure Machine Learning",
+        "Cloud-only",
+        "Substitute locally with MLflow (tracking + registry)",
+        "Task 11 (sub)",
+    ),
+    (
+        "Azure cloud",
+        "Azure services",
+        "Cloud-only",
+        "Emulate locally; real deploy -> non-Apple cloud (Render / Cloud Run)",
+        "Task 15",
+    ),
+    ("REST APIs", "FastAPI, Flask", "Fully local", "uvicorn on localhost", "Task 14"),
+    (
+        "Microservices",
+        "REST services, integration",
+        "Fully local",
+        "docker-compose multi-service",
+        "Task 14/15",
+    ),
+    (
+        "Frontend collaboration",
+        "React, Angular",
+        "Local-capable",
+        "Node + Vite React demo (HTML mockup already built)",
+        "Task 17",
+    ),
+    ("Containers", "Docker", "Fully local", "Docker Desktop (Apple Silicon)", "Task 14"),
+    (
+        "Orchestration",
+        "Kubernetes",
+        "Local-capable",
+        "kind / minikube / k3d single-node on the Mac",
+        "Task 15",
+    ),
+    ("Version control", "Git", "Fully local", "git + GitHub", "Task 0"),
+    (
+        "CI/CD",
+        "CI/CD pipelines",
+        "Local-capable",
+        "pre-commit now; GitHub Actions emulated locally with `act`",
+        "Task 15",
+    ),
+    (
+        "DevOps / MLOps",
+        "Docker, Kubernetes, CI/CD, cloud",
+        "Local-capable",
+        "docker + local k8s + MLflow + act",
+        "Task 12-16",
+    ),
+    (
+        "Observability",
+        "logging, monitoring, alerting",
+        "Fully local",
+        "structured logging; Prometheus + Grafana via docker-compose; Evidently",
+        "Task 16",
+    ),
+    (
+        "Security",
+        "secure production practices",
+        "Fully local",
+        "FastAPI JWT/OAuth2, .env secrets, RBAC",
+        "Task 14/15",
+    ),
+    (
+        "End-to-end data products",
+        "Data -> ML -> API -> app -> monitoring",
+        "Fully local",
+        "the whole pipeline runs on the Mac",
+        "All",
+    ),
+    (
+        "Production deployment",
+        "model serving, deploy, monitor",
+        "Local-capable",
+        "local docker/k8s emulation; real endpoint -> non-Apple cloud",
+        "Task 15",
+    ),
+    (
+        "Product thinking",
+        "architecture + business integration",
+        "Optional/soft",
+        "docs, Architecture sheet, README",
+        "All",
+    ),
+    (
+        "Professional skills",
+        "communication, service orientation",
+        "Optional/soft",
+        "demonstrated via docs / deck",
+        "All",
+    ),
+    (
+        "Teamwork",
+        "collaboration + autonomous delivery",
+        "Optional/soft",
+        "git workflow, branches, PRs",
+        "All",
+    ),
+    ("Communication", "fluent English", "Optional/soft", "docs, deck, code comments", "All"),
+]
+
+
 def build() -> Workbook:
     wb = Workbook()
 
@@ -342,16 +595,23 @@ def build() -> Workbook:
         ],
         [
             "Philosophy",
-            "Light core runs on the Mac; heavy deep-learning + MLOps run on non-Apple cloud GPU. Deps are staged by task, pinned, and reproducible.",
+            "Because the data is SYNTHETIC (small), the whole stack runs LOCAL-FIRST on the Mac — including deep learning via PyTorch MPS (Metal). Cloud is optional, only for scale or the real public deployment.",
         ],
-        ["Guardrails", "No Apple ecosystem; personal GitHub; Mac never runs heavy training."],
+        [
+            "Mac-local (Task 1)",
+            "Almost everything runs completely on the Mac. Cloud-only = Azure ML / Azure Cloud (substitute with MLflow + non-Apple cloud for real deploy); MATLAB skipped (licensed). See the 'Mac-Local Feasibility' sheet.",
+        ],
+        [
+            "Guardrails",
+            "No Apple ecosystem; personal GitHub. Mac stays comfortable because synthetic data is small; a --sample flag + optional cloud cover any scale-up.",
+        ],
         [
             "Status legend",
             "Installed / In use / Done = available now (green). Planned = introduced at a later task (amber).",
         ],
         [
             "See also",
-            "Task0_Summary.xlsx (scope, brands, channels, architecture) and README.md (roadmap).",
+            "Mac-Local Feasibility sheet (this file); Task0_Summary.xlsx (scope/brands/channels/architecture); README.md (roadmap).",
         ],
     ]
     for r, row in enumerate(rows, start=3):
@@ -382,6 +642,49 @@ def build() -> Workbook:
             ws.cell(row=r, column=4).alignment = WRAP_CENTER
             ws.row_dimensions[r].height = 28
             r += 1
+    ws.freeze_panes = "A3"
+    ws.sheet_view.showGridLines = False
+
+    # 3) Mac-Local Feasibility (from the skills matrix) --------------------
+    ws = wb.create_sheet("Mac-Local Feasibility")
+    _title(ws, "Mac-Local Feasibility — full skills matrix on synthetic data", 5)
+    _headers(
+        ws,
+        [
+            "Area / Stack",
+            "Technologies",
+            "Mac-local?",
+            "How on the Mac (local tool / substitute)",
+            "Task",
+        ],
+        [22, 26, 15, 50, 12],
+    )
+    verdict_fill = {
+        "Fully local": GREEN,
+        "Local-capable": PatternFill("solid", fgColor="DDEBF7"),
+        "Cloud-only": AMBER,
+        "Optional/soft": PatternFill("solid", fgColor="EDEDED"),
+    }
+    r = 3
+    for area, techs, verdict, how, task in LOCAL_FEAS:
+        for c, val in enumerate([area, techs, verdict, how, task], start=1):
+            cell = ws.cell(row=r, column=c, value=val)
+            cell.alignment = WRAP
+            cell.border = BORDER
+        ws.cell(row=r, column=3).fill = verdict_fill.get(verdict, AMBER)
+        ws.cell(row=r, column=3).alignment = WRAP_CENTER
+        ws.row_dimensions[r].height = 30
+        r += 1
+    ffull = sum(1 for _a, _t, v, _h, _tk in LOCAL_FEAS if v == "Fully local")
+    note = ws.cell(
+        row=r,
+        column=1,
+        value=f"Verdict: with synthetic data, {ffull}/{len(LOCAL_FEAS)} areas run FULLY on the Mac and most of the rest are local-capable (Spark local mode, single-node Kubernetes via kind/minikube, CI via `act`, DL via PyTorch MPS). Only Azure ML / Azure Cloud are cloud-only (substitute: MLflow locally + a non-Apple cloud for the one real-deployment task). MATLAB is skipped (licensed).",
+    )
+    note.alignment = WRAP
+    note.font = Font(italic=True, color=B.PEPSI_BLUE)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=5)
+    ws.row_dimensions[r].height = 58
     ws.freeze_panes = "A3"
     ws.sheet_view.showGridLines = False
 
