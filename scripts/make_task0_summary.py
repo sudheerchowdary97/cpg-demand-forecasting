@@ -106,7 +106,7 @@ def build() -> Workbook:
     ws.title = "Overview"
     _write_table(
         ws,
-        "PepsiCo Global Demand Forecasting — Project Overview",
+        "PepsiCo Demand Forecasting (Multi-Market) — Project Overview",
         ["Field", "Detail"],
         [
             ["Client (illustrative)", "PepsiCo, Inc. — global food & beverage leader"],
@@ -120,8 +120,8 @@ def build() -> Workbook:
                 f"ALL PepsiCo food & beverage brands across geographies. Illustrative markets: {', '.join(B.GEOS)} ({n_geos} shown, {n_brands} distinct brands) — extensible to PepsiCo's 200+ markets.",
             ],
             [
-                "Scaling approach",
-                "One GLOBAL model with market x brand x category x store embeddings; transfers learning across geos and cold-starts new-market / new-product launches.",
+                "Architecture approach",
+                "Chosen by BACKTESTING, not assumed. Path: local baselines -> global multi-series model with market/retailer/store/brand/SKU embeddings -> per-market comparison -> hybrid refinement (segmented globals e.g. Beverages vs Snacks, optional geo fine-tuning, hierarchical reconciliation). A global model is NOT assumed to beat local. See the 'Architecture' sheet.",
             ],
             [
                 "Data (proxy)",
@@ -206,8 +206,8 @@ def build() -> Workbook:
             ],
             [
                 "Proposed solution",
-                "One GLOBAL deep-learning model with market/brand/category embeddings, forecasting SKU x store x day demand with uncertainty, feeding replenishment, DSD, production and promo planning.",
-                "Learns shared patterns across markets while respecting local behavior; scales to new geos.",
+                "A forecasting system selected EMPIRICALLY: local baselines first, then a global multi-series model with market/brand/store embeddings, compared per market, then hybrid refinement (segmented globals, optional geo fine-tuning, hierarchical reconciliation) adopted only where it beats the baselines.",
+                "Shares patterns where useful and localizes where needed — proven by backtests, not assumed.",
             ],
             [
                 "Business value",
@@ -217,7 +217,7 @@ def build() -> Workbook:
             [
                 "Task 0 in business terms",
                 "Built a trustworthy, reproducible, vendor-neutral foundation designed to scale across brands and markets.",
-                "De-risks the global rollout before any modeling.",
+                "De-risks the multi-market rollout before any modeling.",
             ],
         ],
         [22, 66, 42],
@@ -354,7 +354,7 @@ def build() -> Workbook:
             [
                 "Master data modeling",
                 "Encoding brand/geo attributes (kind, market coverage) up front.",
-                "Seeds the embeddings that let one model scale across geos.",
+                "Seeds the embeddings that let models share signal across geos where it helps.",
             ],
             [
                 "Reproducibility",
@@ -425,7 +425,59 @@ def build() -> Workbook:
         ws.add_image(img, "A4")
     ws.sheet_view.showGridLines = False
 
-    # 8) Roadmap 0-18 -------------------------------------------------------
+    # 8) Architecture — Local vs Global vs Hybrid --------------------------
+    ws = wb.create_sheet("Architecture")
+    _write_table(
+        ws,
+        "Architecture — Local vs Global vs Hybrid (evidence-driven)",
+        ["Layer / Topic", "What it is", "Role / decision"],
+        [
+            [
+                "Local baselines",
+                "One model per series/market (naive, seasonal-naive, ETS/ARIMA, LightGBM per group).",
+                "The BAR every deep model must beat, measured per market. Built in Task 4.",
+            ],
+            [
+                "Global multi-series model",
+                "One shared network trained across all series, conditioned on market/retailer/store/brand/category/SKU embeddings + local covariates (price, promo, calendar, weather).",
+                "Shares response shapes and enables cold-start for new SKUs/stores/markets. Built Tasks 5-9.",
+            ],
+            [
+                "Segmented global models",
+                "Separate global models per natural cluster — e.g. Beverages vs Snacks (very different dynamics), and/or per region.",
+                "Used where one pooled model shows negative transfer. Explored in Task 12.",
+            ],
+            [
+                "Geography fine-tuning / adapters",
+                "Global pre-train, then light per-market fine-tuning or adapter layers.",
+                "Optional refinement for large markets that deviate from the shared pattern.",
+            ],
+            [
+                "Hierarchical reconciliation",
+                "Make SKU x store forecasts coherent with store/brand/category/geography totals (bottom-up / MinT).",
+                "Applied on top of the chosen model so all levels agree.",
+            ],
+            [
+                "How the architecture is chosen",
+                "Market-level rolling-origin backtesting on WRMSSE + interval calibration decides how much pooling actually helps.",
+                "Architecture is a RESULT, not an assumption. A global model is NOT assumed to outperform local.",
+            ],
+            ["—", "—", "—"],
+            [
+                "Data residency — this learning project",
+                "Cross-border pooling is ALLOWED: we use the public M5 (Walmart) proxy dataset, not real PepsiCo country data.",
+                "Optimize for understanding the modeling concepts first.",
+            ],
+            [
+                "Data residency — production constraint",
+                "In a real PepsiCo deployment, raw data may be legally required to stay within region/country boundaries (e.g. India DPDP Act).",
+                "Then use region-segmented global models, local fine-tuning, or federated learning depending on legal requirements.",
+            ],
+        ],
+        [26, 62, 46],
+    )
+
+    # 9) Roadmap 0-18 -------------------------------------------------------
     roadmap = [
         [
             "0",
@@ -457,9 +509,9 @@ def build() -> Workbook:
         ],
         [
             "4",
-            "Classical baselines & eval harness",
-            "why baselines matter",
-            "WRMSSE, backtesting, tracking",
+            "Local baselines & eval harness",
+            "local per-series/market baselines = the bar to beat",
+            "WRMSSE, market-level backtesting, tracking",
             "Planned",
         ],
         [
@@ -486,9 +538,9 @@ def build() -> Workbook:
         ],
         [
             "9",
-            "Transformer / TFT",
-            "self-attention, static covariates (geo/brand)",
-            "large-model training",
+            "Transformer / TFT (global model)",
+            "self-attention + entity embeddings; global vs local per market",
+            "large-model training, market-level comparison",
             "Planned",
         ],
         [
@@ -507,9 +559,9 @@ def build() -> Workbook:
         ],
         [
             "12",
-            "Cloud full-scale training",
-            "global model across all markets",
-            "training-as-code",
+            "Cloud training + hybrid refinement",
+            "segmented globals, geo fine-tuning, reconciliation",
+            "training-as-code, architecture chosen by backtest",
             "Planned",
         ],
         [
@@ -564,7 +616,7 @@ def build() -> Workbook:
         [7, 38, 36, 32, 12],
     )
 
-    # 9) Task 0 checklist ---------------------------------------------------
+    # 10) Task 0 checklist --------------------------------------------------
     ws = wb.create_sheet("Task 0 Checklist")
     _write_table(
         ws,
@@ -583,9 +635,14 @@ def build() -> Workbook:
             ["Repo created & pushed to personal GitHub", "Done ✅"],
             ["PepsiCo branding: real logo + generated brand icons", "Done ✅"],
             ["Multi-geo, multi-brand scope defined (matrix + portfolio)", "Done ✅"],
+            [
+                "Architecture framing: Local -> Global -> compare -> Hybrid (evidence-driven)",
+                "Done ✅",
+            ],
+            ["Data residency documented (learning vs production)", "Done ✅"],
             ["Business + developer summary workbook (this file)", "Done ✅"],
         ],
-        [65, 14],
+        [72, 14],
     )
 
     return wb

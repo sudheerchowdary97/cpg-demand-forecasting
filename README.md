@@ -63,15 +63,15 @@ deep_learning_cpg/
 | 1 | Problem framing & data (DVC) | forecast task formulation | data versioning |
 | 2 | EDA & time-series understanding | seasonality, stationarity | reproducible notebooks |
 | 3 | Data pipeline & feature engineering | windowing, embeddings | leakage-free ETL as code |
-| 4 | Classical baselines & eval harness | why baselines matter | WRMSSE, backtesting, tracking |
+| 4 | Local baselines & eval harness | local per-market baselines = the bar | WRMSSE, market-level backtesting, tracking |
 | 5 | MLP forecaster | MLPs, backprop, regularization | Lightning training loop |
 | 6 | RNN → LSTM → GRU | recurrence, gating | GPU training discipline |
 | 7 | Seq2Seq + Attention | attention, multi-horizon | attention viz |
 | 8 | Temporal Conv Nets (TCN) | dilated causal conv | architecture ablation |
-| 9 | Transformer / TFT | self-attention, interpretability | large-model training |
+| 9 | Transformer / TFT (global model) | self-attention + entity embeddings; global vs local per market | large-model training, market comparison |
 | 10 | Probabilistic (DeepAR / N-BEATS / quantiles) | uncertainty, intermittency | calibration |
 | 11 | Tracking, HPO & model selection | HPO, bias/variance | Optuna + MLflow |
-| 12 | Cloud full-scale training | mixed precision, checkpointing | training-as-code |
+| 12 | Cloud training + hybrid refinement | segmented globals, geo fine-tuning, reconciliation | training-as-code, architecture chosen by backtest |
 | 13 | Export & optimize (ONNX / quantize) | graph export, quantization | perf benchmarking |
 | 14 | Serving API (FastAPI + Docker) | inference-time preprocessing | API design, containers |
 | 15 | Cloud deploy + CI/CD | production readiness | Cloud Run/Render, GitHub Actions |
@@ -80,3 +80,26 @@ deep_learning_cpg/
 | 18 | Docs, presentation & portfolio | synthesis | technical writing, Keynote-HTML deck |
 
 **Status:** Task 0 complete. Each task is committed and pushed on completion.
+
+---
+
+## Architecture — Local vs Global vs Hybrid (evidence-driven)
+
+We do **not** assume a single global model is the answer. The learning path is:
+
+**Local baseline → Global model → Market-level comparison → Hybrid refinement.**
+
+- **Local baselines** (Task 4) — per-market classical models; the bar every deep model must beat.
+- **Global multi-series model** (Tasks 5–9) — one shared network conditioned on
+  market / retailer / store / brand / category / SKU **embeddings** + local covariates;
+  enables cold-start for new SKUs/stores/markets.
+- **Hybrid refinement** (Task 12) — **segmented global models** where useful (e.g. Beverages
+  vs Snacks), optional **geography fine-tuning / adapters**, and **hierarchical reconciliation**.
+- **Selection by backtesting** — market-level rolling-origin WRMSSE decides how much pooling
+  helps. A global model is *not* assumed to outperform local; the project proves it empirically.
+
+**Data residency.** For this learning project, cross-border pooling is **allowed** because we use
+the public **M5 (Walmart) proxy** dataset — the priority is understanding the modeling concepts.
+In a **real PepsiCo deployment**, raw data may be legally required to stay within region/country
+(e.g. India's DPDP Act); that would push the design toward **region-segmented global models,
+local fine-tuning, or federated learning** depending on legal requirements.
