@@ -31,6 +31,7 @@ dev = [
     "pre-commit>=3.7",
     "pytest>=8.2",
     "ipykernel>=6.29",
+    "jupyterlab>=4.0",
 ]
 # Tooling for generating the per-task business/developer summary workbooks
 # and PepsiCo-styled branding assets (icons/banners) embedded in them.

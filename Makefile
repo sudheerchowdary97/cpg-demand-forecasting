@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test data eda clean summary task1-summary task2-summary techstack roadmap mockup task0 help
+.PHONY: setup install lint format test data eda notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -35,6 +35,9 @@ data:  ## Regenerate the full synthetic dataset (DVC-tracked)
 eda:  ## Run Task 2 EDA (figures -> docs/eda/, findings + market-wise docs/EDA.xlsx)
 	$(BIN)/python -m cpg_forecast.eda
 	$(BIN)/python scripts/make_eda_workbook.py
+
+notebook:  ## Launch JupyterLab (opens in your default browser)
+	$(BIN)/jupyter lab
 
 summary:  ## Regenerate the Task 0 business + developer summary workbook
 	$(BIN)/python scripts/make_task0_summary.py
