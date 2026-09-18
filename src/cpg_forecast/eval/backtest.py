@@ -55,7 +55,8 @@ class BacktestConfig:
     horizon: int = 28
     n_folds: int = 3
     step_days: int | None = None  # default = horizon (non-overlapping windows)
-    per_market: bool = True
+    per_market: bool = True  # score per market (True) or pooled "ALL" (False)
+    fit_scope: str = "per_market"  # "per_market" = fit per market; "global" = fit once/fold
     target: str = "units"
     price_col: str = "price"
     weight_window: int = 28  # last-N training days used for WRMSSE dollar weights
@@ -121,6 +122,11 @@ def evaluate(
     Columns: `model, market, fold, metric, value`. WRMSSE is the primary metric;
     MAE/RMSE/MAPE/sMAPE/WAPE are reported alongside. A forecaster that raises is
     logged and skipped for that (market, fold) rather than killing the run.
+
+    `fit_scope="global"` fits each forecaster ONCE per fold on the full-market
+    train and then scores each market from that one model (the Task 5+ global
+    setup); WRMSSE scale/weights are still computed from each market's own train
+    slice. `fit_scope="per_market"` (default) fits a fresh model per market.
     """
     cfg = config or BacktestConfig()
     folds = rolling_origin_splits(
@@ -130,6 +136,12 @@ def evaluate(
 
     rows: list[dict] = []
     for fold_idx, split in enumerate(folds):
+        # Global fit: one model per forecaster for the whole fold (or None if it failed).
+        global_models: dict[str, Forecaster | None] = {}
+        if cfg.fit_scope == "global":
+            for name, factory in forecasters.items():
+                global_models[name] = _safe_fit(name, factory, split.train, "global", fold_idx)
+
         for market in markets:
             if cfg.per_market:
                 tr = split.train[split.train["market"] == market]
@@ -140,12 +152,16 @@ def evaluate(
                 continue
 
             for name, factory in forecasters.items():
+                if cfg.fit_scope == "global":
+                    model = global_models.get(name)
+                else:
+                    model = _safe_fit(name, factory, tr, market, fold_idx)
+                if model is None:
+                    continue
                 try:
-                    model = factory()
-                    model.fit(tr)
                     preds = model.predict(te)
                 except Exception as exc:  # noqa: BLE001 — one bad model must not sink the run
-                    logger.warning("skip %s on %s/fold%d: %s", name, market, fold_idx, exc)
+                    logger.warning("skip %s predict on %s/fold%d: %s", name, market, fold_idx, exc)
                     continue
 
                 y_true = te[cfg.target].to_numpy()
@@ -164,3 +180,14 @@ def evaluate(
                     )
 
     return pd.DataFrame(rows, columns=["model", "market", "fold", "metric", "value"])
+
+
+def _safe_fit(
+    name: str, factory: ForecasterFactory, train: pd.DataFrame, market: str, fold_idx: int
+) -> Forecaster | None:
+    """Build + fit a forecaster, logging and returning None on failure."""
+    try:
+        return factory().fit(train)
+    except Exception as exc:  # noqa: BLE001 — one bad model must not sink the run
+        logger.warning("skip %s fit on %s/fold%d: %s", name, market, fold_idx, exc)
+        return None

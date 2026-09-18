@@ -94,7 +94,7 @@ deep_learning_cpg/
 | 17 | Demo app + LLM insight layer | communicating uncertainty | Streamlit, prompt design |
 | 18 | Docs, presentation & portfolio | synthesis | technical writing, Keynote-HTML deck |
 
-**Status:** Tasks 0–3 complete (scaffold + synthetic data + EDA + leakage-free feature pipeline); Task 4 (local baselines & eval harness) in progress. Each task is committed and pushed on completion.
+**Status:** Tasks 0–5 complete (scaffold + synthetic data + EDA + leakage-free feature pipeline + local baselines/eval harness + global MLP forecaster); Task 6 (RNN → LSTM → GRU) next. Each task is committed and pushed on completion.
 
 ---
 

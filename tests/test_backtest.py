@@ -43,6 +43,16 @@ def test_leaderboard_pivot_has_overall_column():
     assert set(pivot.index) <= {"naive", "seasonal_naive"}
 
 
+def test_evaluate_global_fit_scope_scores_per_market():
+    """fit_scope='global' fits once per fold but still reports per-market rows."""
+    df = _sample()
+    cfg = BacktestConfig(horizon=14, n_folds=1, fit_scope="global")
+    results = evaluate(df, {"naive": lambda: get("naive")()}, cfg)
+    assert not results.empty
+    assert set(results["market"]) == set(df["market"].unique())
+    assert "wrmsse" in set(results["metric"])
+
+
 def test_select_top_series_caps_series_per_market():
     df = _sample()
     top = select_top_series(df, n=2, per_market=True)

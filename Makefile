@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test data eda features baselines notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
+.PHONY: setup install lint format test data eda features baselines mlp notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -11,11 +11,11 @@ help:  ## Show available targets
 setup:  ## Create the Python 3.12 venv and install everything (run once)
 	$(PY) -m venv $(VENV)
 	$(BIN)/pip install -U pip
-	$(BIN)/pip install -e ".[dev,docs,data,baselines]"
+	$(BIN)/pip install -e ".[dev,docs,data,baselines,neural]"
 	$(BIN)/pre-commit install
 
 install:  ## Reinstall project + dev dependencies into the existing venv
-	$(BIN)/pip install -e ".[dev,docs,data,baselines]"
+	$(BIN)/pip install -e ".[dev,docs,data,baselines,neural]"
 
 lint:  ## Check code style without changing files
 	$(BIN)/ruff check src tests
@@ -45,6 +45,14 @@ baselines:  ## Task 4: local baselines + eval on the SAMPLE (smoke) -> per-marke
 # Full roadmap set on the full dataset (heavy: statistical/Prophet fit per series).
 # Intended for cloud, not this Mac. --top-series bounds the per-series models.
 #	$(BIN)/python -m cpg_forecast.baselines --mlflow --models all --top-series 200 --horizon 28 --n-folds 3
+
+mlp:  ## Task 5: train + backtest the global MLP on the SAMPLE (smoke) -> leaderboard + MLflow
+	$(BIN)/python -m cpg_forecast.neural --sample --mlflow \
+		--models mlp,seasonal_naive --horizon 28 --n-folds 3 --epochs 15
+# GBM comparison (lightgbm/xgboost) segfaults with torch in one process on macOS;
+# run it separately via `make baselines`, or add them here on Linux/cloud.
+# Full run (all markets, bounded series) — heavier; prefer cloud GPU:
+#	$(BIN)/python -m cpg_forecast.neural --mlflow --models mlp --top-series 200 --epochs 60
 
 notebook:  ## Launch JupyterLab (opens in your default browser)
 	$(BIN)/jupyter lab
