@@ -43,6 +43,18 @@ docs = [
 data = [
     "dvc>=3.0",
 ]
+# Task 4 local baselines + eval harness. Classical/statistical (statsmodels),
+# additive (prophet), and gradient-boosted (lightgbm/xgboost) baselines, plus
+# MLflow experiment tracking. CPU-only, but per-series statistical/Prophet fits
+# are meant to run on a SAMPLE on this Mac — full-scale runs belong on cloud.
+baselines = [
+    "statsmodels>=0.14",
+    "prophet>=1.1",
+    "lightgbm>=4.0",
+    "xgboost>=2.0",
+    "scikit-learn>=1.4",
+    "mlflow>=2.10",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

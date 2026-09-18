@@ -33,6 +33,8 @@ make test      # run smoke tests (should pass)
 make lint      # ruff + black checks
 make format    # auto-format + auto-fix
 make data      # regenerate the synthetic dataset (DVC-tracked)
+make features  # build the leakage-free feature table (Task 3)
+make baselines # run local baselines + eval harness on the sample (Task 4)
 make summary   # regenerate the PepsiCo-styled Task 0 Excel summary
 make mockup    # open the Demand IQ product UI mockup in a browser
 make help      # list all targets
@@ -92,7 +94,7 @@ deep_learning_cpg/
 | 17 | Demo app + LLM insight layer | communicating uncertainty | Streamlit, prompt design |
 | 18 | Docs, presentation & portfolio | synthesis | technical writing, Keynote-HTML deck |
 
-**Status:** Tasks 0–2 complete (scaffold + synthetic data + EDA); Task 3 (feature pipeline) next. Each task is committed and pushed on completion.
+**Status:** Tasks 0–3 complete (scaffold + synthetic data + EDA + leakage-free feature pipeline); Task 4 (local baselines & eval harness) in progress. Each task is committed and pushed on completion.
 
 ---
 

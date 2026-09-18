@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test data eda features notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
+.PHONY: setup install lint format test data eda features baselines notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -11,11 +11,11 @@ help:  ## Show available targets
 setup:  ## Create the Python 3.12 venv and install everything (run once)
 	$(PY) -m venv $(VENV)
 	$(BIN)/pip install -U pip
-	$(BIN)/pip install -e ".[dev,docs,data]"
+	$(BIN)/pip install -e ".[dev,docs,data,baselines]"
 	$(BIN)/pre-commit install
 
 install:  ## Reinstall project + dev dependencies into the existing venv
-	$(BIN)/pip install -e ".[dev,docs,data]"
+	$(BIN)/pip install -e ".[dev,docs,data,baselines]"
 
 lint:  ## Check code style without changing files
 	$(BIN)/ruff check src tests
@@ -38,6 +38,13 @@ eda:  ## Run Task 2 EDA (figures -> docs/eda/, findings + market-wise docs/EDA.x
 
 features:  ## Run Task 3 feature pipeline (writes data/processed/features_{train,val,test}.parquet)
 	$(BIN)/python -m cpg_forecast.features --out data/processed/features.parquet
+
+baselines:  ## Task 4: local baselines + eval on the SAMPLE (smoke) -> per-market leaderboard + MLflow
+	$(BIN)/python -m cpg_forecast.baselines --sample --mlflow \
+		--models naive,seasonal_naive,moving_average,drift --horizon 28 --n-folds 3
+# Full roadmap set on the full dataset (heavy: statistical/Prophet fit per series).
+# Intended for cloud, not this Mac. --top-series bounds the per-series models.
+#	$(BIN)/python -m cpg_forecast.baselines --mlflow --models all --top-series 200 --horizon 28 --n-folds 3
 
 notebook:  ## Launch JupyterLab (opens in your default browser)
 	$(BIN)/jupyter lab
