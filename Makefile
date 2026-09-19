@@ -2,7 +2,7 @@ PY ?= python3.12
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: setup install lint format test data eda features baselines mlp notebook clean summary task1-summary task2-summary techstack roadmap mockup task0 help
+.PHONY: setup install lint format test data eda features baselines mlp notebook clean summary task1-summary task2-summary techstack roadmap mockup report task0 help
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -74,6 +74,9 @@ roadmap:  ## Regenerate the roadmap workbook (docs/Roadmap.xlsx)
 
 mockup:  ## Open the Demand IQ product UI mockup in your browser
 	open docs/product_mockup/index.html
+
+report:  ## Open the Tasks 1–5 Bridge/Bricks HTML report in your browser
+	open docs/tasks_1_5_report/index.html
 
 task0:  ## Open the Task 0 report (architecture + what was done) in your browser
 	open docs/task0_report/index.html

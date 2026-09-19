@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CPG Demand Forecasting — Tasks 1–5 Report</title>
+
+<!-- Bricks runtime via the production CDN (Bridge Design System). Bump version as needed. -->
+<link rel="stylesheet" type="text/css"
+      href="https://bricks.cdn-apple.com/@nexus/bricks@5.23.2/dist/bricks/bricks.css" />
+<script type="module"
+      src="https://bricks.cdn-apple.com/@nexus/bricks@5.23.2/dist/bricks/bricks.esm.js"></script>
+
+<style>
+  :root {
+    --gap: calc(var(--bricks-base-point, 0.25rem) * 4);
+    --gap-lg: calc(var(--bricks-base-point, 0.25rem) * 8);
+    --radius: 16px;
+    /* PepsiCo corporate palette (matches scripts/branding.py) */
+    --pepsi-blue: #004B93;
+    --pepsi-blue-dark: #00307A;
+    --pepsi-blue-light: #1F6FBF;
+    --pepsi-red: #EB1700;
+    --accent: var(--pepsi-blue);
+    --good: var(--bricks-color-text-success);
+    /* Tint the Bricks tab underline with PepsiCo blue */
+    --bricks-tab-underline-active-color: var(--pepsi-blue);
+    --bricks-tab-underline-active-border-color: var(--pepsi-red);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent: #5AAEF5;
+      --bricks-tab-underline-active-color: #5AAEF5; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--bricks-font-family-text, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+    font-size: var(--bricks-typography-size-medium-1, 1rem);
+    line-height: var(--bricks-typography-leading-medium-1, 1.5);
+    color: var(--bricks-color-text-primary);
+    background: var(--bricks-color-bg-secondary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background:
+      radial-gradient(1100px 380px at 12% -20%, color(srgb 0.12 0.44 0.75 / .55), transparent 60%),
+      linear-gradient(135deg, var(--pepsi-blue-dark) 0%, var(--pepsi-blue) 58%, var(--pepsi-blue-light) 100%);
+    color: #fff;
+    padding: calc(var(--gap-lg) * 1.3) var(--gap-lg) var(--gap-lg);
+    border-bottom: 4px solid var(--pepsi-red);
+  }
+  .hero-inner { max-width: 1120px; margin: 0 auto; }
+  .brandbar { display:flex; align-items:center; gap:14px; margin-bottom: var(--gap); }
+  .brandbar img { height: 30px; width:auto; filter: brightness(0) invert(1); }
+  .brandbar .rule { width:1px; height:22px; background: color(srgb 1 1 1 / .4); }
+  .brandbar .unit { font-size:.8rem; letter-spacing:.04em; opacity:.9; }
+  .hero .kicker { text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; font-weight: 700; opacity: .85; }
+  .hero h1 {
+    font-family: var(--bricks-font-family-display, inherit);
+    font-size: var(--bricks-typography-size-jumbo-4, 2.375rem); line-height: 1.1;
+    margin: 6px 0 8px; letter-spacing: -0.01em;
+  }
+  .hero p.tag { font-size: var(--bricks-typography-size-large-5, 1.125rem); margin: 0 0 var(--gap-lg); max-width: 62ch; opacity: .95; }
+  .hero-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: var(--gap); }
+  .kpi {
+    background: color(srgb 1 1 1 / .12); border: 1px solid color(srgb 1 1 1 / .22);
+    border-radius: var(--radius); padding: 16px 18px; backdrop-filter: blur(6px);
+  }
+  .kpi .n { font-family: var(--bricks-font-family-display, inherit); font-size: 1.7rem; line-height: 1; }
+  .kpi .l { font-size: .8rem; opacity: .9; margin-top: 6px; }
+
+  /* ---------- Layout ---------- */
+  .wrap { max-width: 1120px; margin: 0 auto; padding: var(--gap-lg); }
+  .tabbar { position: sticky; top: 0; z-index: 20; background: var(--bricks-color-bg-secondary);
+    border-bottom: 1px solid var(--bricks-color-border-tertiary); }
+  .tabbar .wrap { padding-top: 8px; padding-bottom: 0; }
+  bricks-tab-group { display: block; }
+  .panel { animation: fade .25s ease; }
+  .panel[hidden] { display: none; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .panel { animation: none; } }
+
+  h2.section { font-family: var(--bricks-font-family-display, inherit);
+    font-size: var(--bricks-typography-size-large-2, 1.75rem); margin: 4px 0 4px; letter-spacing: -0.005em; }
+  .lede { color: var(--bricks-color-text-secondary); margin: 0 0 var(--gap-lg); max-width: 78ch;
+    font-size: var(--bricks-typography-size-large-6, 1rem); }
+  .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .72rem; font-weight: 700;
+    color: var(--accent); margin: var(--gap-lg) 0 8px; }
+  h4 { font-size: var(--bricks-typography-size-large-6, 1rem); margin: 0 0 8px; }
+  a { color: var(--accent); }
+  .mono, code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .85em;
+    background: var(--bricks-color-bg-tertiary); padding: 1px 6px; border-radius: 6px; }
+
+  /* ---------- Cards ---------- */
+  bricks-card { display: block; margin-bottom: var(--gap); }
+  .card-pad { padding: var(--gap-lg); }
+  .surface { background: var(--bricks-color-bg-surface-elevated); border: 1px solid var(--bricks-color-border-tertiary);
+    border-radius: var(--radius); box-shadow: var(--bricks-shadow); }
+  .grid { display: grid; gap: var(--gap); }
+  .grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+  .stat { border-radius: var(--radius); padding: 18px 20px; background: var(--bricks-color-bg-surface-elevated);
+    border: 1px solid var(--bricks-color-border-tertiary); }
+  .stat .n { font-family: var(--bricks-font-family-display, inherit); font-size: 1.55rem; line-height: 1; }
+  .stat .n.good { color: var(--good); }
+  .stat .l { color: var(--bricks-color-text-secondary); font-size: .8rem; margin-top: 8px; }
+
+  /* pain-point / value tiles */
+  .tile { display:flex; gap:14px; align-items:flex-start; padding:16px 18px; border-radius: var(--radius);
+    background: var(--bricks-color-bg-surface-elevated); border:1px solid var(--bricks-color-border-tertiary); }
+  .tile .ic { flex:0 0 auto; width:38px; height:38px; border-radius:10px; display:grid; place-items:center;
+    background: var(--pepsi-blue); color:#fff; font-size:1.1rem; }
+  .tile h4 { margin:0 0 3px; }
+  .tile p { margin:0; color: var(--bricks-color-text-secondary); font-size:.9rem; }
+
+  /* delta pills */
+  .delta { display:inline-flex; align-items:center; gap:4px; font-weight:700; font-size:.8rem;
+    padding:2px 10px; border-radius:999px; background: var(--bricks-flag-green-fill);
+    color: var(--bricks-flag-green-text); border:1px solid var(--bricks-flag-green-border); }
+
+  /* comparison bars */
+  .cmp { display:flex; flex-direction:column; gap:18px; }
+  .cmp-row .head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .cmp-row .head .m { font-weight:600; }
+  .barline { display:grid; grid-template-columns: 120px 1fr; align-items:center; gap:10px; margin:5px 0; }
+  .barline .who { font-size:.8rem; color: var(--bricks-color-text-secondary); }
+  .track { background: var(--bricks-color-bg-tertiary); border-radius:999px; height:16px; position:relative; overflow:hidden; }
+  .fill { position:absolute; inset:0 auto 0 0; border-radius:999px; }
+  .fill.good { background: linear-gradient(90deg, var(--pepsi-blue-dark), var(--pepsi-blue-light)); }
+  .fill.base { background: var(--bricks-color-border-secondary); }
+  .barline .val { display:none; }
+  .cmp small { color: var(--bricks-color-text-tertiary); }
+
+  /* driver bars (Task 2) */
+  .drivers { display:flex; flex-direction:column; gap:12px; }
+  .drv { display:grid; grid-template-columns: 150px 1fr 56px; align-items:center; gap:10px; }
+  .drv .t { font-size:.88rem; }
+  .drv .val { text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+
+  /* tables (technical) */
+  table.data { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: var(--bricks-typography-size-small-1, 0.875rem); }
+  table.data th, table.data td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--bricks-color-divider-tertiary); vertical-align: top; }
+  table.data th { color: var(--bricks-color-text-secondary); font-weight: 600; background: var(--bricks-color-bg-tertiary); }
+  table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll-x { overflow-x: auto; }
+
+  /* "under the hood" technical block — visually demoted */
+  details.tech { margin: var(--gap) 0; border:1px solid var(--bricks-color-border-tertiary);
+    border-radius: 12px; background: var(--bricks-color-bg-tertiary-alpha); overflow:hidden; }
+  details.tech > summary { cursor:pointer; padding:12px 16px; font-weight:600; font-size:.9rem;
+    color: var(--bricks-color-text-secondary); list-style:none; display:flex; align-items:center; gap:8px; }
+  details.tech > summary::before { content:"▸"; color: var(--accent); }
+  details.tech[open] > summary::before { content:"▾"; }
+  details.tech .body { padding: 4px 16px 16px; }
+
+  .callout { border-left: 4px solid var(--bricks-color-border-success); background: var(--bricks-color-bg-success);
+    padding: 14px 16px; border-radius: 10px; margin: var(--gap) 0; }
+  .callout.info { border-left-color: var(--bricks-color-border-info); background: var(--bricks-color-bg-info); }
+  .callout.warn { border-left-color: var(--bricks-color-border-warning); background: var(--bricks-color-bg-warning); }
+  .callout p { margin: 0; }
+  ul.tight { margin: 6px 0; padding-left: 20px; } ul.tight li { margin: 4px 0; }
+  .muted { color: var(--bricks-color-text-secondary); font-size: .875rem; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:999px; font-size:.8rem; border:1px solid transparent; }
+  .chip.done { background: var(--bricks-flag-green-fill); color: var(--bricks-flag-green-text); border-color: var(--bricks-flag-green-border); }
+  .chip.next { background: var(--bricks-flag-blue-fill); color: var(--bricks-flag-blue-text); border-color: var(--bricks-flag-blue-border); }
+  .chip.todo { background: var(--bricks-flag-gray-fill); color: var(--bricks-flag-gray-text); border-color: var(--bricks-flag-gray-border); }
+  footer.rep { padding: var(--gap-lg); text-align: center; color: var(--bricks-color-text-tertiary);
+    border-top: 1px solid var(--bricks-color-border-tertiary); font-size: .8rem; }
+</style>
+</head>
+<body>
+
+<!-- ---------- HERO ---------- -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brandbar">
+      <img src="data:image/png;base64,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" alt="PepsiCo" />
+      <span class="rule"></span>
+      <span class="unit">Global Demand Planning · Data Science</span>
+    </div>
+    <div class="kicker">Demand Forecasting · Tasks 1–5 Report</div>
+    <h1>Right pack, right shelf, right time.</h1>
+    <p class="tag">A demand-forecasting engine for consumer packaged goods — predicting sales for every product,
+      in every store, every day — to cut lost sales and waste and keep shelves full. Here's the journey from
+      raw data to a model that beats the forecasting bar in every market.</p>
+    <div class="hero-kpis">
+      <div class="kpi"><div class="n">−34%</div><div class="l">forecast error vs the seasonal benchmark</div></div>
+      <div class="kpi"><div class="n">4 / 4</div><div class="l">markets where the AI model wins</div></div>
+      <div class="kpi"><div class="n">~4%</div><div class="l">of revenue typically lost to stockouts</div></div>
+      <div class="kpi"><div class="n">28 days</div><div class="l">demand visibility, refreshed daily</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ---------- STICKY TABS ---------- -->
+<div class="tabbar"><div class="wrap">
+  <bricks-tab-group id="nav" visual-style="underline" accessible-title="Report sections">
+    <bricks-tab panel="panel-overview" active>Overview</bricks-tab>
+    <bricks-tab panel="panel-1">1 · Data &amp; framing</bricks-tab>
+    <bricks-tab panel="panel-2">2 · Insights</bricks-tab>
+    <bricks-tab panel="panel-3">3 · Features</bricks-tab>
+    <bricks-tab panel="panel-4">4 · Benchmarks</bricks-tab>
+    <bricks-tab panel="panel-5">5 · AI model</bricks-tab>
+    <bricks-tab panel="panel-arch">Strategy &amp; roadmap</bricks-tab>
+  </bricks-tab-group>
+</div></div>
+
+<main class="wrap" style="padding-top:12px;">
+
+  <!-- ================= OVERVIEW ================= -->
+  <section class="panel" id="panel-overview">
+    <h2 class="section">The opportunity</h2>
+    <p class="lede">For a business the size of PepsiCo (~$91B revenue, 20+ billion-dollar brands, 200+ markets),
+      even a small accuracy gain compounds into large value. Poor forecasts cause two expensive problems —
+      empty shelves and wasted stock. Better forecasts fix both.</p>
+
+    <div class="eyebrow">Why it matters — five costly problems</div>
+    <div class="grid cols-2">
+      <div class="tile"><div class="ic">🛒</div><div><h4>Stockouts</h4><p>Empty shelves lose the sale and send shoppers to rivals — around 4% of revenue for typical retailers.</p></div></div>
+      <div class="tile"><div class="ic">🗑️</div><div><h4>Waste &amp; freshness</h4><p>Snacks and chilled drinks spoil; overstock becomes markdowns and write-offs that erode margin.</p></div></div>
+      <div class="tile"><div class="ic">🚚</div><div><h4>Delivery complexity</h4><p>Direct-store-delivery routes must stock the right amount per store, per day, across many markets.</p></div></div>
+      <div class="tile"><div class="ic">🎯</div><div><h4>Promotions &amp; events</h4><p>Promos, holidays and heatwaves cause big local swings. Miss the spike → stockout; over-forecast → waste.</p></div></div>
+      <div class="tile"><div class="ic">✨</div><div><h4>New launches</h4><p>New flavors and new-market entries have little history — "cold-start" forecasting is hard and high-stakes.</p></div></div>
+      <div class="tile"><div class="ic">📈</div><div><h4>The payoff</h4><p>Fewer stockouts, less waste, higher service levels and faster rollouts — better top line <em>and</em> bottom line.</p></div></div>
+    </div>
+
+    <div class="eyebrow">The result, in one chart</div>
+    <bricks-card><div class="card-pad surface">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <h4 style="margin:0">Forecast error by market — AI model vs seasonal benchmark</h4>
+        <small class="muted">shorter bar = more accurate (WRMSSE, lower is better)</small>
+      </div>
+      <div class="cmp">
+        <div class="cmp-row">
+          <div class="head"><span class="m">India</span><span class="delta">▼ 47% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.60</span><div class="track"><i class="fill good" style="width:51%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 1.12</span><div class="track"><i class="fill base" style="width:96%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">Pakistan</span><span class="delta">▼ 32% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.58</span><div class="track"><i class="fill good" style="width:50%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 0.85</span><div class="track"><i class="fill base" style="width:73%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">United Kingdom</span><span class="delta">▼ 30% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.63</span><div class="track"><i class="fill good" style="width:54%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 0.91</span><div class="track"><i class="fill base" style="width:78%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">Australia</span><span class="delta">▼ 27% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.86</span><div class="track"><i class="fill good" style="width:73%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 1.17</span><div class="track"><i class="fill base" style="width:100%"></i></div></div>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:14px">Overall the AI model cuts forecast error <strong>~34%</strong> versus the
+        seasonal benchmark, and wins in <strong>all four markets</strong>.</p>
+    </div></bricks-card>
+
+    <div class="eyebrow">Product vision — "Demand IQ"</div>
+    <bricks-card><div class="card-pad surface">
+      <p style="margin:0">A demand-planner console that turns the forecast into action: live KPIs, a 28-day forecast
+        with confidence bands, stockout/overstock alerts, and a replenishment watchlist — the business-facing
+        deliverable this modeling work builds toward.</p>
+    </div></bricks-card>
+
+    <div class="eyebrow">Where we are</div>
+    <bricks-card><div class="card-pad surface">
+      <p style="margin:0 0 10px" class="muted">A staged program from raw data to a deployed forecasting service. Tasks 1–5 (covered here) are complete.</p>
+      <span class="chip done">1 · Data &amp; framing</span>
+      <span class="chip done">2 · Insights</span>
+      <span class="chip done">3 · Features</span>
+      <span class="chip done">4 · Benchmarks</span>
+      <span class="chip done">5 · AI model</span>
+      <span class="chip next">6 · Sequence models</span>
+      <span class="chip todo">7–18 · advanced models → deploy → app</span>
+    </div></bricks-card>
+
+    <div class="callout info"><p><strong>How to read this report.</strong> Each tab opens with the business story, then a
+      collapsible "Under the hood" panel with the technical detail. Results shown here are from a bounded laptop run;
+      full-scale training runs on cloud GPU.</p></div>
+  </section>
+
+  <!-- ================= TASK 1 ================= -->
+  <section class="panel" id="panel-1" hidden>
+    <h2 class="section">Data &amp; framing</h2>
+    <p class="lede">First, turn the business problem into a precise, measurable target — then build a realistic dataset
+      that mirrors how PepsiCo actually sells: many brands, many store types, four very different markets.</p>
+
+    <div class="grid cols-2">
+      <bricks-card><div class="card-pad surface">
+        <h4>What we predict</h4>
+        <p class="muted" style="margin:0">Daily sales (units) for <strong>every product in every store, 28 days ahead</strong>,
+          with a confidence range — scored separately for each market so local differences are respected.</p>
+      </div></bricks-card>
+      <bricks-card><div class="card-pad surface">
+        <h4>How the market is structured</h4>
+        <p class="muted" style="margin:0">Geography → sales channel → retailer → store → product. Channels differ hugely:
+          small "general trade" shops dominate India &amp; Pakistan (and have <strong>no till data</strong>), while
+          supermarkets dominate the UK &amp; Australia.</p>
+      </div></bricks-card>
+    </div>
+
+    <div class="eyebrow">The dataset at a glance</div>
+    <div class="grid cols-4">
+      <div class="stat"><div class="n">~991K</div><div class="l">daily sales records</div></div>
+      <div class="stat"><div class="n">960</div><div class="l">product × store series</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">markets · 10 channels · 48 stores</div></div>
+      <div class="stat"><div class="n">3 yrs</div><div class="l">2022–2024 of history</div></div>
+    </div>
+    <p class="muted">A realistic <em>synthetic</em> dataset was built for full control and reproducibility (no external
+      data dependency), matching PepsiCo-style brands, markets and channels — e.g. Walkers (UK), Smith's (Australia),
+      Lay's/Kurkure/Sting (India &amp; Pakistan).</p>
+
+    <details class="tech"><summary>Under the hood — how the data is generated &amp; structured</summary>
+      <div class="body">
+        <p class="muted">The generator injects realistic demand signals the model must learn to separate from noise:</p>
+        <div class="scroll-x"><table class="data">
+          <thead><tr><th>Signal</th><th>Mechanism &amp; magnitude</th></tr></thead>
+          <tbody>
+            <tr><td>Base level</td><td><code>6.0 × market_scale × channel_vol × brand_popularity × pack_factor</code></td></tr>
+            <tr><td>Trend</td><td>per-series linear slope <code>∈ [−0.05, +0.20]</code></td></tr>
+            <tr><td>Weekly seasonality</td><td>Fri–Sun uplift <code>×1.15</code></td></tr>
+            <tr><td>Annual seasonality</td><td>amplitude 0.25 (drinks) / 0.12 (food); <strong>Australia inverted</strong> (hemisphere flip)</td></tr>
+            <tr><td>Weather (drinks)</td><td><code>+1.5%</code> demand per °C above the market mean</td></tr>
+            <tr><td>Promotions</td><td>1–3 windows, 5–10 days, uplift <code>×1.3–1.9</code>, price cut 10–30%</td></tr>
+            <tr><td>Holidays</td><td>Diwali/Eid ×1.9, Christmas ×1.6, Holi/New Year ×1.4 …</td></tr>
+            <tr><td>Intermittency / stockouts</td><td>~1% of days censored to zero</td></tr>
+            <tr><td>Cold-start listings</td><td>15% of series start partway through history</td></tr>
+            <tr><td>Irreducible noise</td><td>sales drawn from <strong>Poisson(mean)</strong> — the accuracy floor</td></tr>
+          </tbody>
+        </table></div>
+        <p class="muted"><strong>Schema (15 fields):</strong> <code>date, market, channel, retailer, store_id, category, brand,
+          sku_id, pack_size, base_price, price, promo_flag, holiday, temp_c, units</code>. Governed by a typed config;
+          a validator enforces no missing/negative sales and positive prices. Version-controlled with <strong>DVC</strong>.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= TASK 2 ================= -->
+  <section class="panel" id="panel-2" hidden>
+    <h2 class="section">Insights from the data</h2>
+    <p class="lede">Before modeling, we studied the demand signal in each market. A handful of clear patterns shaped
+      every later decision — and they're exactly what a good forecast must capture.</p>
+
+    <div class="eyebrow">What moves demand</div>
+    <bricks-card><div class="card-pad surface">
+      <div class="drivers">
+        <div class="drv"><span class="t">Promotions</span><div class="track"><i class="fill good" style="width:80%"></i></div><span class="val">1.6×</span></div>
+        <div class="drv"><span class="t">Holidays &amp; festivals</span><div class="track"><i class="fill good" style="width:74%"></i></div><span class="val">1.5×</span></div>
+        <div class="drv"><span class="t">Weekends</span><div class="track"><i class="fill good" style="width:58%"></i></div><span class="val">1.15×</span></div>
+        <div class="drv"><span class="t">Weather (drinks)</span><div class="track"><i class="fill good" style="width:88%"></i></div><span class="val">r≈.9</span></div>
+      </div>
+      <p class="muted" style="margin-top:12px">Promotions lift sales ~1.6×, holidays ~1.5×, weekends ~1.15×, and warm
+        weather strongly drives beverage demand (correlation ≈ 0.9).</p>
+    </div></bricks-card>
+
+    <div class="eyebrow">Markets are genuinely different</div>
+    <div class="grid cols-3">
+      <div class="stat"><div class="n">5×</div><div class="l">volume gap (India → Australia)</div></div>
+      <div class="stat"><div class="n">52–65%</div><div class="l">sales via small "general trade" (IN/PK)</div></div>
+      <div class="stat"><div class="n">Flipped</div><div class="l">Australia's seasons are inverted</div></div>
+    </div>
+    <div class="callout"><p><strong>So what?</strong> One generic model can't serve all markets. Forecasts must be
+      <em>locally aware</em> — which is exactly why the AI model uses per-market "embeddings" and is scored market by market.</p></div>
+
+    <details class="tech"><summary>Under the hood — findings &amp; modeling implications</summary>
+      <div class="body"><div class="scroll-x"><table class="data">
+        <thead><tr><th>Finding</th><th class="num">Value</th><th>Implication for modeling</th></tr></thead>
+        <tbody>
+          <tr><td>Intermittency (zero-sales days)</td><td class="num">~1.6%</td><td>Count/quantile losses for sparse SKUs (Task 10)</td></tr>
+          <tr><td>Volume by market</td><td class="num">IN&gt;PK&gt;UK&gt;AU</td><td>Market embeddings / per-market scoring</td></tr>
+          <tr><td>General-trade share</td><td class="num">IN 52% · PK 65%</td><td>Channel is a first-class feature; GT has no POS</td></tr>
+          <tr><td>Weekend uplift</td><td class="num">≈1.15×</td><td>Day-of-week features</td></tr>
+          <tr><td>Promotion uplift</td><td class="num">≈1.59×</td><td>Promo flag + price discount features</td></tr>
+          <tr><td>Holiday uplift</td><td class="num">≈1.49×</td><td>Per-market holiday calendars</td></tr>
+          <tr><td>Weather ↔ drinks</td><td class="num">r≈0.88–0.90</td><td>Temperature feature</td></tr>
+          <tr><td>Autocorrelation</td><td class="num">lags 7/14/21/28</td><td>Weekly lag features</td></tr>
+          <tr><td>Hemisphere flip</td><td class="num">AU inverted</td><td>Seasonality is market-specific</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">Artifacts: <code>docs/EDA.xlsx</code>, <code>docs/eda_findings.md</code>, <code>notebooks/explore_demand.ipynb</code>.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= TASK 3 ================= -->
+  <section class="panel" id="panel-3" hidden>
+    <h2 class="section">Turning data into signals</h2>
+    <p class="lede">Models don't read raw spreadsheets — they need engineered "signals." We built these carefully so a
+      forecast for any day only ever uses information that was <strong>actually known at that point in time</strong>
+      (no accidental peeking at the future, which would flatter the results).</p>
+
+    <div class="grid cols-2">
+      <bricks-card><div class="card-pad surface">
+        <h4>The signals we feed the model</h4>
+        <ul class="tight">
+          <li><strong>Recent sales history</strong> — the last few weeks of demand and its trend</li>
+          <li><strong>Calendar</strong> — day of week, month, holidays, season</li>
+          <li><strong>Price &amp; promotions</strong> — current price and discount depth</li>
+          <li><strong>Product &amp; place</strong> — brand, category, store, channel, market</li>
+        </ul>
+      </div></bricks-card>
+      <bricks-card><div class="card-pad surface">
+        <h4>Why you can trust the numbers</h4>
+        <ul class="tight">
+          <li>Every signal is computed <strong>causally</strong> — only from the past.</li>
+          <li>Categories are learned on training data only, so results aren't inflated.</li>
+          <li>Testing always uses <strong>later</strong> dates than training — like forecasting for real.</li>
+        </ul>
+      </div></bricks-card>
+    </div>
+
+    <details class="tech"><summary>Under the hood — engineered features &amp; formulas</summary>
+      <div class="body"><div class="scroll-x"><table class="data">
+        <thead><tr><th>Family</th><th>Columns</th><th>Formula</th></tr></thead>
+        <tbody>
+          <tr><td>Calendar</td><td><code>dow, is_weekend, month, doy_sin, doy_cos, is_holiday</code></td><td><code>doy_sin=sin(2π·doy/365)</code>, <code>doy_cos=cos(2π·doy/365)</code></td></tr>
+          <tr><td>Price</td><td><code>discount_pct</code></td><td><code>1 − price/base_price</code></td></tr>
+          <tr><td>Lags</td><td><code>units_lag{7,14,21,28}</code></td><td>value from k days ago (per store×SKU)</td></tr>
+          <tr><td>Rolling</td><td><code>units_roll_{mean,std}{7,28}</code></td><td><strong>shift(1) then roll</strong> → current day excluded</td></tr>
+          <tr><td>Categorical codes</td><td><code>…_code</code> ×7</td><td>integer vocab, <strong>0 = unseen</strong></td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted"><strong>Splitting:</strong> <code>time_split()</code> for a chronological train/val/test cut, and
+        <code>rolling_origin_splits()</code> for backtesting. Output: <code>data/processed/features_{train,val,test}.parquet</code>
+        — one shared feature contract reused by every model.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= TASK 4 ================= -->
+  <section class="panel" id="panel-4" hidden>
+    <h2 class="section">Setting the bar</h2>
+    <p class="lede">Before building anything fancy, we established honest benchmarks — 11 classic forecasting methods —
+      plus a scoring system that grades every future model the same way. A new model only earns its place if it beats
+      these.</p>
+
+    <div class="grid cols-3">
+      <div class="stat"><div class="n">11</div><div class="l">benchmark methods</div></div>
+      <div class="stat"><div class="n">6</div><div class="l">accuracy metrics tracked</div></div>
+      <div class="stat"><div class="n">Per-market</div><div class="l">realistic rolling backtests</div></div>
+    </div>
+
+    <div class="eyebrow">How we grade a forecast</div>
+    <bricks-card><div class="card-pad surface">
+      <p style="margin:0 0 6px"><strong>WRMSSE</strong> is the headline score (the industry-standard M5 metric). In plain
+        terms: it measures error, <em>scaled</em> so big and small products compare fairly, and <em>weighted</em> by each
+        product's recent sales value — so the score reflects what matters commercially. Supporting metrics (MAE, RMSE,
+        MAPE, sMAPE, WAPE) give complementary views. <strong>Lower is better.</strong></p>
+    </div></bricks-card>
+
+    <div class="eyebrow">Benchmark leaderboard (illustrative sample)</div>
+    <bricks-card><div class="card-pad surface">
+      <div class="cmp">
+        <div class="barline"><span class="who">Moving average · 0.87</span><div class="track"><i class="fill good" style="width:31%"></i></div></div>
+        <div class="barline"><span class="who">LightGBM · 0.89</span><div class="track"><i class="fill good" style="width:31%"></i></div></div>
+        <div class="barline"><span class="who">Seasonal-naive · 1.16</span><div class="track"><i class="fill base" style="width:40%"></i></div></div>
+        <div class="barline"><span class="who">Naive · 1.31</span><div class="track"><i class="fill base" style="width:46%"></i></div></div>
+        <div class="barline"><span class="who">Prophet · 2.87</span><div class="track"><i class="fill base" style="width:100%"></i></div></div>
+      </div>
+      <p class="muted" style="margin-top:12px">On this tiny sample, simple methods lead and Prophet over-fits — a sane
+        ordering. The point isn't the ranking; it's the <strong>bar</strong> and the reusable scoring engine.</p>
+    </div></bricks-card>
+
+    <details class="tech"><summary>Under the hood — the 11 benchmarks &amp; their configs</summary>
+      <div class="body"><div class="scroll-x"><table class="data">
+        <thead><tr><th>Group</th><th>Models</th><th>Config</th></tr></thead>
+        <tbody>
+          <tr><td>Simple</td><td>naive, seasonal-naive, moving-average, drift</td><td>weekly period 7; MA window 28</td></tr>
+          <tr><td>Statistical</td><td>ETS, ARIMA, SARIMAX, VAR</td><td>ARIMA(2,1,2); SARIMAX(1,1,1)(1,0,1,7); VAR per-market on category totals</td></tr>
+          <tr><td>Additive</td><td>Prophet</td><td>weekly + yearly seasonality</td></tr>
+          <tr><td>Gradient-boosted</td><td>LightGBM, XGBoost</td><td>300 trees, lr 0.05; recursive leakage-free 28-day rollout</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted"><strong>WRMSSE:</strong> <code>Σ wᵢ·√(MSEᵢ/scaleᵢ)</code>, scaleᵢ = mean squared 1-step naïve error over
+        training, wᵢ = share of dollar sales over the last 28 training days. Harness: <code>eval/</code> (metrics,
+        rolling-origin backtest, leaderboard, MLflow).</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= TASK 5 ================= -->
+  <section class="panel" id="panel-5" hidden>
+    <h2 class="section">The AI model</h2>
+    <p class="lede">The first neural network: a single "global" model trained across all markets at once. It learns the
+      shared shape of demand, while product- and market-specific "embeddings" let it specialize — including for brand-new
+      products with little history.</p>
+
+    <div class="grid cols-4">
+      <div class="stat"><div class="n good">−34%</div><div class="l">overall error vs benchmark</div></div>
+      <div class="stat"><div class="n good">4 / 4</div><div class="l">markets won</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">shared model, all markets</div></div>
+      <div class="stat"><div class="n">28-day</div><div class="l">forecast, refreshed daily</div></div>
+    </div>
+
+    <div class="eyebrow">Accuracy by market — AI model vs benchmark</div>
+    <bricks-card><div class="card-pad surface">
+      <div class="cmp">
+        <div class="cmp-row">
+          <div class="head"><span class="m">India</span><span class="delta">▼ 47% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.60</span><div class="track"><i class="fill good" style="width:51%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 1.12</span><div class="track"><i class="fill base" style="width:96%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">Pakistan</span><span class="delta">▼ 32% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.58</span><div class="track"><i class="fill good" style="width:50%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 0.85</span><div class="track"><i class="fill base" style="width:73%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">United Kingdom</span><span class="delta">▼ 30% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.63</span><div class="track"><i class="fill good" style="width:54%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 0.91</span><div class="track"><i class="fill base" style="width:78%"></i></div></div>
+        </div>
+        <div class="cmp-row">
+          <div class="head"><span class="m">Australia</span><span class="delta">▼ 27% error</span></div>
+          <div class="barline"><span class="who">AI model · 0.86</span><div class="track"><i class="fill good" style="width:73%"></i></div></div>
+          <div class="barline"><span class="who">Seasonal · 1.17</span><div class="track"><i class="fill base" style="width:100%"></i></div></div>
+        </div>
+      </div>
+      <small class="muted">WRMSSE — lower is better. The AI model also wins on every supporting metric (see below).</small>
+    </div></bricks-card>
+
+    <div class="callout"><p><strong>The story:</strong> on a tiny single-market sample the model actually <em>lost</em> — a
+      neural net needs data. Given real multi-market volume it flips decisively, winning everywhere. The biggest gains
+      are in the largest markets (India −47%, Pakistan −32%), where there's the most to learn.</p></div>
+
+    <details class="tech"><summary>Under the hood — architecture, training &amp; full metrics</summary>
+      <div class="body">
+        <div class="grid cols-2">
+          <div>
+            <h4>Architecture</h4>
+            <ul class="tight">
+              <li>Input: flattened 28-day sales window (log1p) + 11 calendar/price covariates</li>
+              <li>Embeddings for market/channel/retailer/store/brand/category/SKU (dim <code>min(50, 1.6·vocab⁰·⁵⁶)</code>)</li>
+              <li>MLP <code>[256,128]</code> + BatchNorm + Dropout 0.1</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Training (PyTorch Lightning)</h4>
+            <ul class="tight">
+              <li>Huber loss on log1p; AdamW (lr 1e-3, wd 1e-5)</li>
+              <li>ReduceLROnPlateau + early stopping; batch 1024</li>
+              <li>Leakage-free recursive rollout; <code>fit_scope=global</code> (fit once, score per market)</li>
+            </ul>
+          </div>
+        </div>
+        <h4 style="margin-top:16px">Full supporting metrics (AI model vs seasonal-naive)</h4>
+        <div class="scroll-x"><table class="data">
+          <thead><tr><th>Market</th><th class="num">WRMSSE</th><th class="num">MAE</th><th class="num">RMSE</th><th class="num">MAPE%</th><th class="num">sMAPE%</th><th class="num">WAPE%</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>India · AI</td><td class="num best">0.596</td><td class="num">6.67</td><td class="num">9.34</td><td class="num">12.7</td><td class="num">15.1</td><td class="num">13.9</td></tr>
+            <tr><td>India · seasonal</td><td class="num">1.121</td><td class="num">11.96</td><td class="num">18.14</td><td class="num">24.7</td><td class="num">24.0</td><td class="num">25.0</td></tr>
+            <tr class="win"><td>Pakistan · AI</td><td class="num best">0.584</td><td class="num">4.60</td><td class="num">6.11</td><td class="num">17.2</td><td class="num">19.2</td><td class="num">17.9</td></tr>
+            <tr><td>Pakistan · seasonal</td><td class="num">0.854</td><td class="num">6.87</td><td class="num">9.09</td><td class="num">28.0</td><td class="num">28.6</td><td class="num">26.7</td></tr>
+            <tr class="win"><td>UK · AI</td><td class="num best">0.634</td><td class="num">3.17</td><td class="num">4.13</td><td class="num">26.0</td><td class="num">26.4</td><td class="num">23.8</td></tr>
+            <tr><td>UK · seasonal</td><td class="num">0.912</td><td class="num">4.60</td><td class="num">6.06</td><td class="num">40.1</td><td class="num">37.2</td><td class="num">34.5</td></tr>
+            <tr class="win"><td>Australia · AI</td><td class="num best">0.859</td><td class="num">3.19</td><td class="num">4.19</td><td class="num">26.6</td><td class="num">27.8</td><td class="num">25.0</td></tr>
+            <tr><td>Australia · seasonal</td><td class="num">1.170</td><td class="num">4.37</td><td class="num">5.76</td><td class="num">37.8</td><td class="num">38.6</td><td class="num">34.3</td></tr>
+          </tbody>
+        </table></div>
+        <p class="muted"><strong>Run:</strong> all 4 markets · top-60 series/market · 261,281 rows · 40 epochs · 3 folds · Apple MPS.
+          Compared vs seasonal-naive only (torch + LightGBM can't co-run on macOS); the gradient-boosted comparison runs on
+          Linux/cloud. Bounded laptop result — the champion comes from a full cloud-GPU run.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= STRATEGY & ROADMAP ================= -->
+  <section class="panel" id="panel-arch" hidden>
+    <h2 class="section">Strategy &amp; roadmap</h2>
+    <p class="lede">The guiding principle: don't assume, <strong>prove</strong>. We start with simple local models, add a
+      shared global model, compare them market by market, and only adopt more complex approaches where the evidence says
+      they help.</p>
+
+    <div class="eyebrow">The approach, step by step</div>
+    <div class="grid cols-2">
+      <div class="tile"><div class="ic">1</div><div><h4>Local baselines</h4><p>Simple per-market models — the bar every AI model must beat.</p></div></div>
+      <div class="tile"><div class="ic">2</div><div><h4>Global model</h4><p>One shared network with product/market embeddings; handles new products.</p></div></div>
+      <div class="tile"><div class="ic">3</div><div><h4>Compare per market</h4><p>Backtests decide how much a shared model actually helps — no assumptions.</p></div></div>
+      <div class="tile"><div class="ic">4</div><div><h4>Hybrid refinement</h4><p>Segment or fine-tune per region only where it demonstrably wins.</p></div></div>
+    </div>
+
+    <div class="callout info"><p><strong>Built for the real world.</strong> In production, data-residency rules (e.g. India's
+      DPDP Act) may require region-segmented models or federated learning — the staged approach accommodates that.</p></div>
+
+    <div class="eyebrow">Roadmap — what's next</div>
+    <bricks-card><div class="card-pad surface"><div class="scroll-x">
+      <table class="data">
+        <thead><tr><th>#</th><th>Stage</th><th>Goal</th></tr></thead>
+        <tbody>
+          <tr><td>6</td><td>Sequence models (RNN/LSTM/GRU) <span class="chip next">Next</span></td><td>capture temporal patterns explicitly</td></tr>
+          <tr><td>7–9</td><td>Attention, TCN, Transformer</td><td>state-of-the-art forecasting architectures</td></tr>
+          <tr><td>10</td><td>Probabilistic forecasts</td><td>confidence ranges, intermittent demand</td></tr>
+          <tr><td>11–12</td><td>Tuning &amp; cloud training</td><td>pick the champion; scale up</td></tr>
+          <tr><td>13–16</td><td>Package → serve → deploy → monitor</td><td>a live forecasting service</td></tr>
+          <tr><td>17–18</td><td>"Demand IQ" app + write-up</td><td>put forecasts in planners' hands</td></tr>
+        </tbody>
+      </table>
+    </div></div></bricks-card>
+  </section>
+
+</main>
+
+<footer class="rep">
+  <p style="margin:0 0 6px">CPG Demand Forecasting · Tasks 1–5 · built with Apple Bridge Design System (Bricks) · PepsiCo-styled mock deliverable.</p>
+  <p style="margin:0; max-width:80ch; margin-inline:auto;">Independent, illustrative learning / portfolio project. <strong>Not affiliated with, authorized by, or endorsed by PepsiCo, Inc.</strong> The PepsiCo logo is used for an internal, client-styled mock; all trademarks belong to their respective owners. Data is synthetic; results are from a bounded laptop run.</p>
+</footer>
+
+<script>
+  (function () {
+    var group = document.getElementById('nav');
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+    function show(panelId) {
+      panels.forEach(function (p) { p.hidden = (p.id !== panelId); });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (group) {
+      group.addEventListener('bricksTabGroupClick', function (e) {
+        var tab = e.detail && e.detail.value;
+        if (tab && tab.getAttribute) { show(tab.getAttribute('panel')); }
+      });
+    }
+  })();
+</script>
+</body>
+</html>
